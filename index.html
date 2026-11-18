@@ -1,0 +1,1436 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Del sensor al panel</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* Concepto: cuaderno de laboratorio. El índice lateral es un riel vertical como `git log --graph`:
+   cada sección es un punto que se llena al visitarla y el cuestionario final es el punto de fusión. */
+:root{
+  --bg:#F3F7F8; --surface:#FFFFFF; --surface-2:#EAF1F3; --ink:#16232E; --muted:#54646E;
+  --line:#D3DEE3; --accent:#0B3D5C; --accent-ink:#FFFFFF;
+  --teal:#00767C; --teal-soft:#DDF3F3; --orange:#B8390A; --orange-soft:#FFEADF;
+  --ok:#17794A; --ok-soft:#E0F4E9; --bad:#B3261E; --bad-soft:#FCE6E4;
+  --code-bg:#E8F0F2; --code-ink:#16323F; --code-cm:#5E7480;
+  --f-display:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B1620; --surface:#122230; --surface-2:#182C3C; --ink:#E7EFF3; --muted:#9DB0BC;
+    --line:#25394A; --accent:#7CCBEE; --accent-ink:#06202F;
+    --teal:#3CCFD0; --teal-soft:#0F3A40; --orange:#FF9468; --orange-soft:#3B2417;
+    --ok:#5FD09A; --ok-soft:#113626; --bad:#FF8A80; --bad-soft:#3C1B19;
+    --code-bg:#0A1620; --code-ink:#CFE4EE; --code-cm:#7F98A6; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B1620; --surface:#122230; --surface-2:#182C3C; --ink:#E7EFF3; --muted:#9DB0BC;
+  --line:#25394A; --accent:#7CCBEE; --accent-ink:#06202F;
+  --teal:#3CCFD0; --teal-soft:#0F3A40; --orange:#FF9468; --orange-soft:#3B2417;
+  --ok:#5FD09A; --ok-soft:#113626; --bad:#FF8A80; --bad-soft:#3C1B19;
+  --code-bg:#0A1620; --code-ink:#CFE4EE; --code-cm:#7F98A6; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:20px}
+body{background:var(--bg);color:var(--ink);font:400 17px/1.55 var(--f-body);margin:0}
+h1,h2,h3,h4{font-family:var(--f-display);line-height:1.15;margin:0;text-wrap:balance}
+p{margin:0}
+code,kbd{font-family:var(--f-mono);font-size:.88em;background:var(--code-bg);color:var(--code-ink);padding:.08em .38em;border-radius:4px}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:var(--accent)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+#progress{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;height:3px;background:transparent;z-index:20}
+#progress i{display:block;height:100%;width:0;background:var(--teal);transition:width .3s}
+
+.shell{display:grid;grid-template-columns:minmax(0,1fr);gap:32px;max-width:1180px;margin:0 auto;
+  padding-block:24px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+@media (min-width:1000px){.shell{grid-template-columns:250px minmax(0,1fr);gap:48px}}
+
+/* Índice tipo git graph */
+.toc{min-width:0}
+.toc-inner{position:sticky;top:20px;max-height:calc(100vh - 40px);overflow:auto;padding-right:6px}
+.toc h2{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;font-weight:600}
+.toc ol{list-style:none;margin:0;padding:0 0 0 14px;position:relative}
+.toc ol::before{content:"";position:absolute;left:5px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.toc li{position:relative}
+.toc .grp{font:600 .72rem/1 var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:14px 0 6px 6px}
+.toc a{display:block;position:relative;padding:5px 6px 5px 10px;text-decoration:none;color:var(--ink);font-size:.93rem;border-radius:6px}
+.toc a::before{content:"";position:absolute;left:-14px;top:50%;width:10px;height:10px;margin-top:-5px;border-radius:50%;
+  background:var(--bg);border:2px solid var(--muted);box-sizing:border-box}
+.toc a.seen::before{background:var(--teal);border-color:var(--teal)}
+.toc a.now{font-weight:700;background:var(--surface-2)}
+.toc a.now::before{border-color:var(--accent);background:var(--accent)}
+.toc li.merge a::before{border-radius:3px;transform:rotate(45deg)}
+@media (max-width:999px){
+  .toc-inner{position:static;max-height:none}
+  .toc ol{display:flex;gap:8px;overflow-x:auto;padding:0 0 8px;scrollbar-width:thin}
+  .toc ol::before{display:none}
+  .toc .grp{display:none}
+  .toc li{flex:none}
+  .toc a{border:1px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:999px;font-size:.88rem;white-space:nowrap}
+  .toc a::before{display:none}
+  .toc a.seen{border-color:var(--teal)}
+  .toc a.now{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+}
+
+main{min-width:0}
+.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.hero .top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.kicker{font:600 .8rem/1.2 var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
+.hero h1{font-size:clamp(2.1rem,5.4vw,3.5rem);font-weight:700;margin:12px 0 14px;letter-spacing:-.01em}
+.hero .sub{font-size:1.15rem;color:var(--muted);max-width:44rem}
+.hero .by{margin-top:18px;font-size:.92rem;color:var(--muted)}
+.theme-btn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-size:.86rem}
+.goals{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:26px;padding:0;list-style:none}
+.goals li{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.goals b{display:block;font-family:var(--f-display);font-size:1rem;margin-bottom:4px}
+.goals a{font-size:.85rem}
+
+.sec{padding:44px 0 8px;min-width:0}
+.sec+.sec{border-top:1px solid var(--line);margin-top:36px}
+.eyebrow{font:600 .76rem/1 var(--f-display);letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-bottom:10px}
+.sec h2{font-size:clamp(1.55rem,3.2vw,2.15rem);font-weight:700;margin-bottom:10px}
+.lede{color:var(--muted);font-size:1.08rem;max-width:42rem;margin-bottom:22px}
+.sec h3{font-size:1.15rem;margin:28px 0 10px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;min-width:0}
+.card h4{font-size:1rem;margin-bottom:6px}
+.card p+p{margin-top:8px}
+.callout{border-left:4px solid var(--teal);background:var(--teal-soft);padding:12px 16px;border-radius:0 8px 8px 0;margin:18px 0}
+.callout.warn{border-color:var(--orange);background:var(--orange-soft)}
+.callout b:first-child{font-family:var(--f-display)}
+.mini{font-size:.9rem;color:var(--muted)}
+.tag{display:inline-block;font:600 .72rem/1 var(--f-display);letter-spacing:.08em;text-transform:uppercase;background:var(--orange-soft);color:var(--orange);padding:5px 8px;border-radius:5px;margin-bottom:10px}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 .8rem/1.2 var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--surface-2)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.tbl table td:first-child{font-weight:600}
+
+/* botones */
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;font-weight:600;font-size:.95rem}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:5px 10px;font-size:.85rem}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+/* código */
+.codefig{margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--code-bg);overflow:hidden;min-width:0}
+.codefig figcaption{display:flex;justify-content:space-between;align-items:center;padding:6px 10px 6px 14px;
+  font:500 .76rem/1 var(--f-mono);color:var(--muted);border-bottom:1px solid var(--line)}
+.codefig pre{margin:0;padding:12px 14px;overflow-x:auto;font:400 .86rem/1.55 var(--f-mono);color:var(--code-ink)}
+.codefig .cm{color:var(--code-cm)}
+.copy{border:1px solid var(--line);background:var(--surface);border-radius:6px;font:600 .72rem/1 var(--f-body);padding:4px 8px}
+
+/* pestañas */
+.tabs [role=tablist]{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs [role=tab]{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 16px;font-weight:600}
+.tabs [role=tab][aria-selected=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tabs [role=tabpanel][hidden]{display:none}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0 0 14px}
+.kv dt{font-weight:700;font-family:var(--f-display);font-size:.9rem}
+.kv dd{margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.chip{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:5px 12px;font-size:.88rem}
+
+/* simulador */
+.sim{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin:16px 0}
+.places{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.places{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.place{border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:10px 12px;min-height:150px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.place h4{font-size:.9rem}
+.place .cmd{font:500 .72rem/1 var(--f-mono);color:var(--teal)}
+.fileitem{font:500 .8rem/1.3 var(--f-mono);border:1px dashed var(--line);border-radius:6px;padding:7px 9px;background:var(--surface);overflow-wrap:anywhere}
+.fileitem.mod{border-color:var(--orange);border-style:solid;color:var(--orange)}
+.fileitem.stg{border-color:var(--teal);border-style:solid;color:var(--teal)}
+.fileitem.empty{color:var(--muted);border-style:dotted}
+.commit{font:400 .78rem/1.3 var(--f-mono);border-radius:6px;padding:5px 8px;background:var(--surface);border:1px solid var(--line);overflow-wrap:anywhere}
+.commit b{color:var(--teal);font-weight:700}
+.commit.local{border-color:var(--orange)}
+.commit.new{border-color:var(--teal);background:var(--teal-soft)}
+.commit small{display:block;color:var(--muted)}
+.status{font-size:.78rem;color:var(--muted)}
+.simbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 10px}
+.simbar input{flex:1 1 220px;min-width:0;font:400 .88rem var(--f-mono);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.term{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;font:400 .82rem/1.5 var(--f-mono);color:var(--code-ink);padding:10px 12px;height:150px;overflow:auto}
+.term .cm{color:var(--code-cm)} .term .err{color:var(--bad)} .term .okk{color:var(--ok)} .term .hint{color:var(--orange)}
+.mission{list-style:none;margin:12px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px}
+.mission li{font-size:.9rem;display:flex;gap:8px;align-items:flex-start}
+.mission li::before{content:"";flex:none;width:16px;height:16px;margin-top:3px;border:2px solid var(--muted);border-radius:4px}
+.mission li.done::before{background:var(--ok);border-color:var(--ok);box-shadow:inset 0 0 0 2px var(--surface)}
+.mission li.done{color:var(--ok)}
+
+/* ramas */
+.graphbox{overflow-x:auto;background:var(--bg);border:1px solid var(--line);border-radius:10px;margin:12px 0}
+.graphbox svg{display:block}
+.graphbox text{font-family:var(--f-mono)}
+
+/* actividades */
+.opts{display:grid;gap:8px}
+.opt{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 14px}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.ok{border-color:var(--ok);background:var(--ok-soft)}
+.opt.bad{border-color:var(--bad);background:var(--bad-soft)}
+.opt.part{border-color:var(--orange);background:var(--orange-soft)}
+.opt:disabled{cursor:default}
+.fb{margin-top:12px;padding:12px 14px;border-radius:8px;background:var(--surface-2)}
+.fb.ok{background:var(--ok-soft)} .fb.bad{background:var(--bad-soft)} .fb.part{background:var(--orange-soft)}
+.cards{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.cardbtn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px;font:500 .85rem var(--f-mono);text-align:left}
+.cardbtn:disabled{opacity:.35}
+.slots{counter-reset:s;list-style:none;margin:10px 0;padding:0;display:grid;gap:6px}
+.slots li{counter-increment:s;display:flex;gap:10px;align-items:center;border:1px dashed var(--line);border-radius:8px;padding:8px 12px;min-height:44px;font:500 .85rem var(--f-mono)}
+.slots li::before{content:counter(s);font:700 .85rem var(--f-display);color:var(--teal);width:18px}
+.slots li.filled{border-style:solid;background:var(--surface)}
+.slots li.wrong{border-color:var(--bad)} .slots li.right{border-color:var(--ok)}
+.ignrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.ignrow code{font-size:.9rem}
+.ignrow .why{grid-column:1/-1;font-size:.88rem;color:var(--muted)}
+.ignrow.ok .why{color:var(--ok)} .ignrow.bad .why{color:var(--bad)}
+.scorepill{display:inline-block;background:var(--surface-2);border-radius:999px;padding:4px 12px;font-weight:600;font-size:.9rem}
+
+/* árbol del repositorio */
+.tree{list-style:none;margin:0;padding:0;font:400 .88rem/1 var(--f-mono)}
+.tree button{display:block;width:100%;text-align:left;border:0;background:none;padding:7px 8px;border-radius:6px;font:inherit;white-space:pre}
+.tree button:hover{background:var(--surface-2)}
+.tree button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}
+.tree .ign{text-decoration:line-through;opacity:.7}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px}
+@media (max-width:700px){.two{grid-template-columns:minmax(0,1fr)}}
+
+/* pipeline */
+.pipe{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.pstep{flex:1 1 130px;min-width:0;border:2px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);transition:.2s}
+.pstep b{display:block;font-family:var(--f-display);font-size:.95rem}
+.pstep span{font-size:.82rem;color:var(--muted)}
+.pstep.on{border-color:var(--ok);background:var(--ok-soft)}
+.pstep.fail{border-color:var(--bad);background:var(--bad-soft)}
+.pstep.off{opacity:.45}
+
+/* errores / revelar */
+.accs{display:grid;gap:8px}
+.acc{border:1px solid var(--line);background:var(--surface);border-radius:10px;overflow:hidden}
+.acc>button{display:flex;justify-content:space-between;gap:12px;width:100%;text-align:left;border:0;background:none;padding:12px 16px;font-weight:600}
+.acc>button::after{content:"+";font:700 1.1rem var(--f-display);color:var(--teal)}
+.acc>button[aria-expanded=true]::after{content:"–"}
+.acc .body{padding:0 16px 14px;color:var(--muted)}
+
+/* barras de planes */
+.bars{display:grid;gap:10px;margin:14px 0}
+.bar{display:grid;grid-template-columns:130px minmax(0,1fr) 90px;gap:10px;align-items:center;font-size:.92rem}
+.bar i{display:block;height:16px;border-radius:4px;background:var(--teal);min-width:3px}
+.bar span:last-child{font-variant-numeric:tabular-nums;text-align:right;font-weight:600}
+@media (max-width:520px){.bar{grid-template-columns:1fr 70px}.bar i{grid-column:1/-1;order:3}}
+
+/* cuestionario */
+.quiz{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.qtop{display:flex;justify-content:space-between;gap:12px;font-size:.88rem;color:var(--muted);margin-bottom:10px;flex-wrap:wrap}
+.qbar{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;margin-bottom:18px}
+.qbar i{display:block;height:100%;background:var(--teal);width:0;transition:width .3s}
+.qq{font:600 1.2rem/1.3 var(--f-display);margin-bottom:16px}
+.letter{font:700 .85rem var(--f-display);color:var(--teal);margin-right:8px}
+.score{font:700 3rem/1 var(--f-display);color:var(--accent)}
+.review{list-style:none;margin:16px 0;padding:0;display:grid;gap:10px}
+.review li{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--bg)}
+.review li.ok{border-color:var(--ok)} .review li.bad{border-color:var(--bad)}
+.review small{display:block;color:var(--muted);margin-top:4px}
+footer.end{margin-top:48px;padding-top:24px;border-top:1px solid var(--line)}
+footer.end h3{margin-top:0}
+.refs{font-size:.92rem;color:var(--muted);padding-left:18px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+
+/* ---- componentes de esta clase ---- */
+.field{font:400 .9rem var(--f-mono);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);min-width:0}
+.field:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.lbl{font:600 .78rem/1.2 var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tplist{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
+.tplist li{font:500 .86rem/1.3 var(--f-mono);border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:var(--surface);overflow-wrap:anywhere;display:flex;justify-content:space-between;gap:10px}
+.tplist li.hit{border-color:var(--teal);background:var(--teal-soft)}
+.tplist li.miss{opacity:.6}
+.tplist .badge{font:700 .68rem var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--teal);white-space:nowrap}
+.challenge{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line);font-size:.95rem}
+.challenge::before{content:"";flex:none;width:16px;height:16px;margin-top:4px;border:2px solid var(--muted);border-radius:4px}
+.challenge.done::before{background:var(--ok);border-color:var(--ok);box-shadow:inset 0 0 0 2px var(--surface)}
+.challenge.done{color:var(--ok)}
+.subgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:12px}
+.subbox{border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:10px 12px;min-width:0}
+.subbox h4{font-size:.95rem;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.subbox .flt{font:500 .78rem var(--f-mono);color:var(--teal);overflow-wrap:anywhere;margin:4px 0 8px}
+.msg{font:400 .76rem/1.3 var(--f-mono);border-radius:6px;padding:5px 8px;background:var(--surface);border:1px solid var(--line);overflow-wrap:anywhere;margin-top:5px}
+.msg.ret{border-color:var(--orange);background:var(--orange-soft)}
+.msg small{color:var(--muted)}
+.retlist{margin:8px 0 0;padding:0;list-style:none;font:400 .78rem/1.35 var(--f-mono);display:grid;gap:4px}
+.retlist li{overflow-wrap:anywhere}
+.pill{display:inline-block;font:600 .74rem/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;padding:5px 9px;border-radius:999px;background:var(--ok-soft);color:var(--ok)}
+.pill.off{background:var(--bad-soft);color:var(--bad)}
+.ladder{list-style:none;margin:12px 0;padding:0;display:grid;gap:6px}
+.ladder li{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:center;font:500 .82rem var(--f-mono);border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface)}
+.ladder li span.pk{font:700 .8rem var(--f-display);color:var(--accent-ink);background:var(--accent);border-radius:6px;padding:3px 8px}
+.ladder li span.r{text-align:right}
+.ladder li.back .pk{background:var(--teal);color:#fff}
+.labgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:860px){.labgrid{grid-template-columns:minmax(0,1fr)}}
+.val{font:700 2.1rem/1 var(--f-display);color:var(--accent)}
+.val small{font:600 .9rem var(--f-display);color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--teal)}
+.fanicon{width:38px;height:38px;border-radius:50%;border:5px solid var(--line);border-top-color:var(--muted);display:inline-block;vertical-align:middle}
+.fanicon.on{border-color:var(--teal-soft);border-top-color:var(--teal);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.chartbox{border:1px solid var(--line);border-radius:10px;background:var(--bg);overflow-x:auto}
+.chartbox svg{display:block;min-width:520px;width:100%;height:auto}
+.chartbox text{font-family:var(--f-mono);fill:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:7px 12px;font-weight:600;font-size:.88rem}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}
+.rtl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0}
+.rtl .chip{background:var(--surface)}
+.rtl .arr{color:var(--teal);font-weight:700}
+.detail{margin-top:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:14px 16px}
+.detail h4{margin-bottom:6px}
+button.pstep{font:inherit;color:inherit;text-align:left;cursor:pointer}
+button.pstep:hover{border-color:var(--accent)}
+.steps{list-style:none;margin:12px 0;padding:0;display:grid;gap:8px;counter-reset:st}
+.steps li{counter-increment:st;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start}
+.steps li::before{content:counter(st);font:700 .85rem var(--f-display);width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
+</style>
+
+<div id="progress" aria-hidden="true"><i></i></div>
+<div class="shell">
+<nav class="toc" aria-label="Índice de la clase"><div class="toc-inner"><h2>Índice</h2><ol id="tocList"></ol></div></nav>
+
+<main id="main">
+<header class="hero">
+  <div class="top">
+    <p class="kicker">Unidad 3 · Software para IoT · Temas 3.2.2 a 3.4</p>
+    <button class="theme-btn" id="themeBtn" type="button">Cambiar tema</button>
+  </div>
+  <h1>Del sensor al panel</h1>
+  <p class="sub">Publicadores y suscriptores MQTT, openHAB y Grafana. Practica con simuladores, arma la cadena completa y comprueba lo aprendido con un cuestionario final.</p>
+  <p class="by">Ingeniería en Computación · UAEMéx · Tecnologías Computacionales (IoT)</p>
+  <ul class="goals">
+    <li><b>Publicar y suscribirte</b>Explicar qué hacen publicadores y suscriptores, y escribir topics y filtros con comodines. <a href="#topics">Ir</a></li>
+    <li><b>Conectar openHAB</b>Llevar un dispositivo MQTT a un Item y automatizarlo con una regla. <a href="#ohab">Ir</a></li>
+    <li><b>Elegir la fuente en Grafana</b>Decidir entre transmisión en vivo e historial, y la visualización adecuada. <a href="#graf">Ir</a></li>
+    <li><b>Integrar la cadena</b>Seguir un dato desde el ESP32 hasta el panel. <a href="#lab">Ir</a></li>
+  </ul>
+</header>
+
+<!-- ============ INICIO ============ -->
+<section class="sec" id="porque" data-title="El camino del dato" data-group="Para empezar">
+  <p class="eyebrow">Para empezar</p>
+  <h2>El camino de un dato, del sensor al panel</h2>
+  <p class="lede">Tu ESP32 ya sabe leer la temperatura. Hoy aprendes cómo ese número llega a una pantalla, dispara una regla que enciende un ventilador y queda guardado para graficarlo. Toca cada pieza.</p>
+  <div class="pipe" id="archNodes"></div>
+  <div class="detail" id="archInfo" aria-live="polite"></div>
+  <p class="mini" style="margin-top:12px">Hay dos roles en MQTT: quien <b>publica</b> un mensaje en un tema y quien está <b>suscrito</b> a ese tema. Un mismo programa puede hacer ambos.</p>
+</section>
+
+<section class="sec" id="caso" data-title="Caso inicial">
+  <p class="eyebrow">Caso inicial</p>
+  <h2>El invernadero de Valeria</h2>
+  <p class="lede">Léelo, piensa tus respuestas y compáralas con la solución al final de la clase.</p>
+  <div class="card">
+    <p>Valeria tiene seis sensores ESP32 en un invernadero. Su aplicación del celular le pregunta a cada sensor por HTTP, cada segundo: «¿cuánto mides?».</p>
+    <p>Resultado: las baterías duran dos días, la aplicación se congela cuando un sensor no responde y, cuando su hermano quiere un segundo tablero, hay que reprogramar los seis sensores con otra dirección. Además, ella no se entera cuando un sensor se apaga.</p>
+  </div>
+  <h3>Para pensar y anotar</h3>
+  <div class="accs" id="caseQs"></div>
+</section>
+
+<!-- ============ BLOQUE 1: MQTT ============ -->
+<section class="sec" id="topics" data-title="Topics y comodines" data-group="Bloque 1 · MQTT">
+  <p class="eyebrow">Bloque 1 · MQTT</p>
+  <h2>El broker en medio y los topics</h2>
+  <p class="lede">El broker es el cartero: recibe cada mensaje y lo entrega a quien lo pidió. Publicadores y suscriptores nunca se conectan entre sí (tema 3.2.1). Lo que los une es el <b>topic</b>.</p>
+  <div class="grid3">
+    <div class="card"><h4>Topic</h4><p>Una ruta de niveles separados por <code>/</code>, como <code>invernadero/zona1/temperatura</code>. Distingue mayúsculas de minúsculas.</p></div>
+    <div class="card"><h4>Comodín <code>+</code></h4><p>Reemplaza exactamente un nivel. <code>invernadero/+/humedad</code> cubre la humedad de cualquier zona.</p></div>
+    <div class="card"><h4>Comodín <code>#</code></h4><p>Reemplaza todos los niveles restantes y va siempre al final. <code>invernadero/zona1/#</code> cubre todo lo de la zona 1.</p></div>
+  </div>
+  <div class="callout warn"><b>Solo para suscribirse.</b> Los comodines valen en los filtros de suscripción. Un publicador siempre escribe en un topic concreto.</div>
+  <h3>Probador de filtros</h3>
+  <p class="mini">Escribe un filtro y mira qué topics recibiría. Los topics que empiezan con <code>$</code> son del broker y no los captura un comodín al inicio.</p>
+  <div class="row"><input class="field" id="tpFilter" type="text" value="invernadero/+/temperatura" aria-label="Filtro de suscripción" autocomplete="off" spellcheck="false" style="flex:1 1 260px"></div>
+  <div class="chips" id="tpChips"></div>
+  <p id="tpMsg" class="mini" aria-live="polite"></p>
+  <ul class="tplist" id="tpList"></ul>
+  <h3>Retos de filtros</h3>
+  <p class="mini">Escribe un filtro que reciba exactamente los topics que se piden, ni más ni menos.</p>
+  <div id="tpChallenges"></div>
+</section>
+
+<section class="sec" id="publicadores" data-title="Publicadores">
+  <p class="eyebrow">Tema 3.2.2</p>
+  <h2>Publicadores</h2>
+  <p class="lede">Un publicador es un cliente que envía mensajes a un topic. No sabe quién los leerá ni cuántos suscriptores hay.</p>
+  <div class="grid2">
+    <div class="card"><h4>Qué lleva un mensaje</h4><dl class="kv" style="margin:8px 0 0"><dt>topic</dt><dd>A dónde se publica.</dd><dt>payload</dt><dd>El contenido, normalmente texto: <code>24.5</code> o un JSON.</dd><dt>QoS</dt><dd>La garantía de entrega: 0, 1 o 2.</dd><dt>retain</dt><dd>Si el broker debe guardar el último mensaje del topic.</dd></dl></div>
+    <div class="card"><h4>Buenas costumbres</h4><p>Un número simple en el payload y las unidades en el nombre o en la documentación. Publica cada cierto tiempo o cuando el valor cambie, no en un bucle sin pausa. Las credenciales del broker van en <code>secrets.h</code>, fuera del repositorio.</p></div>
+  </div>
+  <div class="tabs" data-tabs>
+    <div role="tablist" aria-label="Lenguaje del publicador">
+      <button role="tab" aria-selected="true" data-tab="pa" type="button">ESP32 (Arduino)</button>
+      <button role="tab" aria-selected="false" data-tab="pp" type="button">Python (paho-mqtt)</button>
+    </div>
+    <div role="tabpanel" data-panel="pa">
+<figure class="codefig"><figcaption><span>publicador.ino</span></figcaption><pre><code>#include &lt;WiFi.h&gt;
+#include &lt;PubSubClient.h&gt;
+#include "secrets.h"   // WIFI_SSID, WIFI_PASS, MQTT_HOST, MQTT_USER, MQTT_PASS
+
+WiFiClient red;
+PubSubClient mqtt(red);
+
+void conectarMqtt() {
+  while (!mqtt.connected()) {
+    // el clientId debe ser único en el broker
+    if (!mqtt.connect("esp32-zona1", MQTT_USER, MQTT_PASS)) delay(2000);
+  }
+}
+
+void setup() {
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  while (WiFi.status() != WL_CONNECTED) delay(500);
+  mqtt.setServer(MQTT_HOST, 1883);
+}
+
+void loop() {
+  if (!mqtt.connected()) conectarMqtt();
+  mqtt.loop();
+
+  float t = leerTemperatura();      // tu función del tema 2.2
+  char texto[8];
+  dtostrf(t, 1, 1, texto);          // 24.5 se envía como "24.5"
+  mqtt.publish("invernadero/zona1/temperatura", texto, true);   // true = retain
+  delay(5000);
+}</code></pre></figure>
+      <p class="mini">La biblioteca PubSubClient publica siempre con QoS 0. Si necesitas QoS 1 o 2 al publicar, usa otra biblioteca.</p>
+    </div>
+    <div role="tabpanel" data-panel="pp" hidden>
+<figure class="codefig"><figcaption><span>publicador.py</span></figcaption><pre><code>import paho.mqtt.client as mqtt
+
+cliente = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="script-zona1")
+cliente.username_pw_set("usuario", "clave")   # en tu proyecto, léelos de variables de entorno
+cliente.connect("192.168.1.50", 1883)
+cliente.loop_start()
+
+info = cliente.publish("invernadero/zona1/temperatura", "24.5", qos=1, retain=True)
+info.wait_for_publish()    # espera la confirmación del broker (QoS 1)
+
+cliente.loop_stop()
+cliente.disconnect()</code></pre></figure>
+      <p class="mini">Con paho-mqtt 2.x el cliente se crea indicando la versión de la API de callbacks, como arriba.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="suscriptores" data-title="Suscriptores">
+  <p class="eyebrow">Tema 3.2.3</p>
+  <h2>Suscriptores</h2>
+  <p class="lede">Un suscriptor declara interés en un filtro y recibe cada mensaje que coincida. No pregunta: espera. Puedes sumar suscriptores sin tocar al publicador.</p>
+  <div class="grid3">
+    <div class="card"><h4>Filtro</h4><p>El topic o patrón al que te suscribes. Puede llevar <code>+</code> y <code>#</code>.</p></div>
+    <div class="card"><h4>Callback</h4><p>La función que se ejecuta con cada mensaje. Debe terminar rápido: no bloquees el programa.</p></div>
+    <div class="card"><h4>Payload en bytes</h4><p>El mensaje llega como bytes. Conviértelo a texto y luego al tipo que necesites.</p></div>
+  </div>
+  <div class="tabs" data-tabs>
+    <div role="tablist" aria-label="Lenguaje del suscriptor">
+      <button role="tab" aria-selected="true" data-tab="sa" type="button">ESP32 (Arduino)</button>
+      <button role="tab" aria-selected="false" data-tab="sp" type="button">Python (paho-mqtt)</button>
+    </div>
+    <div role="tabpanel" data-panel="sa">
+<figure class="codefig"><figcaption><span>suscriptor.ino</span></figcaption><pre><code>void alRecibir(char* tema, byte* datos, unsigned int largo) {
+  String msg;
+  for (unsigned int i = 0; i &lt; largo; i++) msg += (char)datos[i];   // bytes a texto
+  if (String(tema) == "invernadero/zona1/ventilador/set") {
+    digitalWrite(PIN_VENTILADOR, msg == "ON" ? HIGH : LOW);
+  }
+}
+
+void conectarMqtt() {
+  while (!mqtt.connected()) {
+    if (mqtt.connect("esp32-ventilador", MQTT_USER, MQTT_PASS)) {
+      mqtt.subscribe("invernadero/zona1/ventilador/set");   // después de conectar
+    } else delay(2000);
+  }
+}
+
+// en setup():  mqtt.setCallback(alRecibir);
+// en loop():   mqtt.loop();   // sin esta llamada no llegan mensajes</code></pre></figure>
+    </div>
+    <div role="tabpanel" data-panel="sp" hidden>
+<figure class="codefig"><figcaption><span>suscriptor.py</span></figcaption><pre><code>import paho.mqtt.client as mqtt
+
+def al_conectar(cliente, datos, banderas, codigo, propiedades):
+    cliente.subscribe("invernadero/+/temperatura")   # se repite en cada reconexión
+
+def al_recibir(cliente, datos, mensaje):
+    valor = float(mensaje.payload.decode())          # el payload son bytes
+    print(mensaje.topic, valor)
+
+cliente = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+cliente.on_connect = al_conectar
+cliente.on_message = al_recibir
+cliente.connect("192.168.1.50", 1883)
+cliente.loop_forever()</code></pre></figure>
+    </div>
+  </div>
+  <div class="callout warn"><b>Dos dispositivos con el mismo clientId.</b> El broker desconecta al primero cuando entra el segundo, y ambos se expulsan en bucle. Dale a cada dispositivo un identificador distinto.</div>
+</section>
+
+<section class="sec" id="labmqtt" data-title="Simulador pub/sub">
+  <p class="eyebrow">Bloque 1 · Simulador</p>
+  <h2>Publica, suscríbete y mira qué llega a quién</h2>
+  <p class="lede">Este broker de práctica ya tiene dos tableros suscritos. Publica mensajes, crea suscriptores nuevos y prueba la bandera retain y el mensaje de última voluntad.</p>
+  <div class="sim">
+    <div class="grid2">
+      <div>
+        <p class="lbl">Publicadores</p>
+        <div class="row" style="margin:8px 0">
+          <button class="btn" id="mqP1" type="button">Zona 1 · temperatura</button>
+          <button class="btn" id="mqP2" type="button">Zona 2 · humedad</button>
+          <button class="btn" id="mqP3" type="button">Sala · temperatura</button>
+        </div>
+        <label class="row" style="gap:8px;margin-bottom:10px"><input type="checkbox" id="mqRetain"> <span>Publicar con <b>retain</b></span></label>
+        <div class="row">
+          <input class="field" id="mqTopic" type="text" value="invernadero/zona1/humedad" aria-label="Topic a publicar" style="flex:2 1 200px" autocomplete="off" spellcheck="false">
+          <input class="field" id="mqPayload" type="text" value="62" aria-label="Payload" style="flex:1 1 80px" autocomplete="off">
+          <button class="btn primary" id="mqPub" type="button">Publicar</button>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <span class="pill" id="mqState">Sensor zona 1 en línea</span>
+          <button class="btn sm" id="mqCut" type="button">Cortar energía al sensor</button>
+          <button class="btn sm" id="mqBack" type="button">Reconectar sensor</button>
+        </div>
+      </div>
+      <div>
+        <p class="lbl">Mensajes retenidos en el broker</p>
+        <ul class="retlist" id="mqRet"></ul>
+        <p class="lbl" style="margin-top:12px">Nuevo suscriptor</p>
+        <div class="row" style="margin-top:6px">
+          <input class="field" id="mqFilter" type="text" value="invernadero/zona1/#" aria-label="Filtro del nuevo suscriptor" style="flex:1 1 200px" autocomplete="off" spellcheck="false">
+          <button class="btn" id="mqSub" type="button">Suscribirse</button>
+        </div>
+        <p class="mini" id="mqErr" aria-live="polite" style="margin-top:6px"></p>
+      </div>
+    </div>
+    <div class="subgrid" id="mqSubs"></div>
+    <p class="lbl" style="margin:14px 0 6px">Registro del broker</p>
+    <div class="term" id="mqLog" role="log" aria-live="polite" style="height:130px"></div>
+    <ul class="mission" id="mqMission"></ul>
+    <div class="row" style="margin-top:10px"><button class="btn sm" id="mqReset" type="button">Reiniciar</button></div>
+  </div>
+</section>
+
+<section class="sec" id="calidad" data-title="QoS, retain y LWT">
+  <p class="eyebrow">Bloque 1 · Garantías</p>
+  <h2>QoS, retain y última voluntad</h2>
+  <div class="tabs" data-tabs>
+    <div role="tablist" aria-label="Garantías MQTT">
+      <button role="tab" aria-selected="true" data-tab="q" type="button">QoS</button>
+      <button role="tab" aria-selected="false" data-tab="r" type="button">Retain</button>
+      <button role="tab" aria-selected="false" data-tab="w" type="button">Última voluntad (LWT)</button>
+    </div>
+    <div role="tabpanel" data-panel="q">
+      <p class="lede" style="margin-bottom:12px">La calidad de servicio define cuánto esfuerzo hace MQTT para entregar un mensaje. Elige un nivel y avanza paso a paso.</p>
+      <div class="row" id="qosSel"></div>
+      <ul class="ladder" id="qosSteps" aria-live="polite"></ul>
+      <div class="row"><button class="btn primary" id="qosNext" type="button">Siguiente paso</button><button class="btn" id="qosReset" type="button">Reiniciar</button></div>
+      <div id="qosNote" class="fb" style="margin-top:12px"></div>
+      <p class="mini" style="margin-top:10px">Más garantía significa más mensajes de ida y vuelta, más tiempo y más consumo. Algunas herramientas fijan el nivel: PubSubClient publica con QoS 0, el plugin MQTT de Grafana se suscribe con QoS 0 y el binding MQTT de openHAB usa QoS 0 por defecto.</p>
+    </div>
+    <div role="tabpanel" data-panel="r" hidden>
+      <div class="grid2">
+        <div class="card"><h4>Qué hace</h4><p>El broker guarda el <b>último</b> mensaje retenido de cada topic. Un suscriptor nuevo lo recibe en cuanto se suscribe, sin esperar la siguiente publicación.</p></div>
+        <div class="card"><h4>Para qué sirve</h4><p>Estados que cambian poco: «ventilador encendido», «sensor en línea», una configuración. Un tablero que abre a las 3 pm ve el valor actual de inmediato.</p></div>
+      </div>
+      <div class="callout warn"><b>No retengas comandos.</b> Si <code>.../ventilador/set</code> queda retenido con «ON», el dispositivo volverá a recibir «ON» cada vez que se reconecte. Para borrar un mensaje retenido, publica un payload vacío con retain.</div>
+    </div>
+    <div role="tabpanel" data-panel="w" hidden>
+      <p class="lede" style="margin-bottom:12px">Al conectarse, el cliente le deja al broker un mensaje de última voluntad. Si el cliente desaparece sin despedirse (energía, Wi-Fi), el broker lo publica por él.</p>
+<figure class="codefig"><figcaption><span>conexión con LWT (ESP32)</span></figcaption><pre><code>// connect(id, usuario, clave, topicLWT, qosLWT, retainLWT, mensajeLWT)
+if (mqtt.connect("esp32-zona1", MQTT_USER, MQTT_PASS,
+                 "invernadero/zona1/estado", 1, true, "offline")) {
+  mqtt.publish("invernadero/zona1/estado", "online", true);   // aviso normal al entrar
+}</code></pre></figure>
+      <p class="mini">Patrón habitual: <code>estado = online</code> retenido al conectar y <code>offline</code> retenido como LWT. Cualquier tablero sabe en qué estado está el sensor. Pruébalo en el simulador de arriba con «Cortar energía al sensor».</p>
+    </div>
+  </div>
+  <h3>¿Qué QoS elegirías?</h3>
+  <div id="qosScen"></div>
+</section>
+
+<section class="sec" id="acttopics" data-title="Actividad: topics">
+  <p class="eyebrow">Actividad en clase · 5 minutos</p>
+  <h2>¿Buen topic o mejorable?</h2>
+  <p class="lede">Decide si cada topic está bien diseñado para publicar y lee el motivo.</p>
+  <div id="topicClass"></div>
+  <p style="margin-top:12px"><span class="scorepill" id="tcScore">Aciertos: 0 de 8</span> <button class="btn sm" id="tcReset" type="button">Reintentar</button></p>
+</section>
+
+<!-- ============ BLOQUE 2: openHAB ============ -->
+<section class="sec" id="ohab" data-title="Qué es openHAB" data-group="Bloque 2 · openHAB">
+  <p class="eyebrow">Tema 3.3</p>
+  <h2>openHAB: un tablero único para dispositivos distintos</h2>
+  <p class="lede">openHAB (open Home Automation Bus) es una plataforma de automatización de código abierto. Reúne dispositivos de distintos fabricantes y protocolos, y sobre ellos ofrece reglas, interfaces y persistencia.</p>
+  <div class="grid2">
+    <div class="card"><h4>Dónde corre</h4><p>Linux, Windows, macOS, Docker y Raspberry Pi (la distribución openHABian). La versión estable vigente es la 5.2.x, que requiere Java 21. Su interfaz web, Main UI, se abre por defecto en el puerto 8080.</p></div>
+    <div class="card"><h4>Qué ofrece</h4><p>Bindings para conectar tecnologías (MQTT, Zigbee, Hue y cientos más), reglas de automatización, páginas de control y servicios de persistencia que guardan el historial.</p></div>
+  </div>
+  <h3>Del dispositivo a la regla: el modelo de openHAB</h3>
+  <p class="mini">Toca cada nivel. El ejemplo es el sensor de temperatura del invernadero.</p>
+  <div class="pipe" id="ohNodes"></div>
+  <div class="detail" id="ohInfo" aria-live="polite"></div>
+  <p class="mini" style="margin-top:10px">Analogía: el <b>Thing</b> es el aparato, el <b>Channel</b> es una de sus pantallitas o botones, y el <b>Item</b> es la copia de esa pantallita en tu tablero.</p>
+  <h3>Sigue un mensaje por openHAB</h3>
+  <ul class="steps" id="ohFlow" aria-live="polite"></ul>
+  <div class="row"><button class="btn primary" id="ohFlowNext" type="button">Siguiente paso</button><button class="btn" id="ohFlowReset" type="button">Reiniciar</button></div>
+</section>
+
+<section class="sec" id="ohmqtt" data-title="openHAB con MQTT">
+  <p class="eyebrow">Bloque 2 · Conexión</p>
+  <h2>Conectar openHAB con tu broker MQTT</h2>
+  <ol class="steps">
+    <li><div><b>Instala el binding MQTT.</b> En Main UI: Configuración, Add-ons, Bindings, «MQTT Binding».</div></li>
+    <li><div><b>Crea el Thing «MQTT Broker» (bridge).</b> Indica host, puerto (1883, o 8883 con TLS), usuario y clave. Representa la conexión con el broker.</div></li>
+    <li><div><b>Crea un Generic MQTT Thing</b> bajo ese bridge y agrégale canales. En cada canal defines su tipo y sus topics.</div></li>
+    <li><div><b>Vincula cada canal a un Item.</b> Así el valor queda disponible para reglas y páginas.</div></li>
+    <li><div><b>Úsalo.</b> Muestra el Item en una página de Main UI o reacciona a él con una regla.</div></li>
+  </ol>
+  <div class="callout">El binding no descubre tus topics por sí solo. Cada canal lleva el topic exacto que publica tu dispositivo.</div>
+  <div class="tabs" data-tabs>
+    <div role="tablist" aria-label="Archivos de configuración">
+      <button role="tab" aria-selected="true" data-tab="th" type="button">mqtt.things</button>
+      <button role="tab" aria-selected="false" data-tab="it" type="button">invernadero.items</button>
+    </div>
+    <div role="tabpanel" data-panel="th">
+<figure class="codefig"><figcaption><span>things/mqtt.things</span></figcaption><pre><code>Bridge mqtt:broker:mosquitto "Broker Mosquitto" [ host="192.168.1.50", port=1883, secure=false, username="openhab", password="********" ]
+{
+  Thing topic invernadero "Invernadero zona 1" {
+    Channels:
+      Type number : temperatura "Temperatura" [ stateTopic="invernadero/zona1/temperatura", unit="°C" ]
+      Type switch : ventilador "Ventilador" [ stateTopic="invernadero/zona1/ventilador/estado", commandTopic="invernadero/zona1/ventilador/set" ]
+  }
+}</code></pre></figure>
+      <p class="mini">También puedes crear todo desde la interfaz, sin escribir archivos. La contraseña real no se sube a tu repositorio: aplica lo visto en el tema 3.1.</p>
+    </div>
+    <div role="tabpanel" data-panel="it" hidden>
+<figure class="codefig"><figcaption><span>items/invernadero.items</span></figcaption><pre><code>Number:Temperature Invernadero_Temp "Temperatura [%.1f %unit%]" { channel="mqtt:topic:mosquitto:invernadero:temperatura" }
+Switch Invernadero_Ventilador "Ventilador" { channel="mqtt:topic:mosquitto:invernadero:ventilador" }</code></pre></figure>
+      <p class="mini">El identificador del canal sigue el patrón <code>mqtt:topic:bridge:thing:canal</code>.</p>
+    </div>
+  </div>
+  <h3>Parámetros de canal que más usarás</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Parámetro</th><th>Para qué sirve</th></tr></thead>
+    <tbody>
+      <tr><td>stateTopic</td><td>Topic del que el canal lee su estado. Si se deja vacío, el canal no tiene estado.</td></tr>
+      <tr><td>commandTopic</td><td>Topic donde el canal publica comandos. Si se deja vacío, el canal es de solo lectura.</td></tr>
+      <tr><td>transformationPattern</td><td>Transforma el payload recibido, por ejemplo <code>JSONPATH($.temp)</code> para extraer un campo de un JSON.</td></tr>
+      <tr><td>on / off</td><td>Valores del payload que significan encendido y apagado, cuando no son ON y OFF.</td></tr>
+      <tr><td>retained</td><td>Publica los comandos con la bandera retain.</td></tr>
+      <tr><td>qos</td><td>Nivel de QoS de este canal, en lugar del del broker.</td></tr>
+    </tbody></table></div>
+  <h3>¿Qué configuración falta?</h3>
+  <div id="ohQs"></div>
+</section>
+
+<section class="sec" id="ohreglas" data-title="Reglas y persistencia">
+  <p class="eyebrow">Bloque 2 · Automatización</p>
+  <h2>Reglas y persistencia</h2>
+  <p class="lede">Una regla dice: cuando algo ocurra, y si se cumple una condición, haz esta acción. Arma una y mira el código que genera.</p>
+  <div class="sim">
+    <div class="row" style="gap:10px">
+      <span>Cuando <code>Invernadero_Temp</code> cambie y sea</span>
+      <select class="field" id="rbCmp" aria-label="Comparador"><option value="&gt;">mayor que</option><option value="&lt;">menor que</option></select>
+      <input class="field" id="rbVal" type="number" value="30" style="width:80px" aria-label="Umbral en grados">
+      <span>°C, enviar</span>
+      <select class="field" id="rbCmd" aria-label="Comando"><option>ON</option><option>OFF</option></select>
+      <span>al ventilador.</span>
+    </div>
+    <figure class="codefig" data-dyn><figcaption><span>reglas/ventilador.rules</span></figcaption><pre><code id="rbOut"></code></pre></figure>
+    <div class="callout warn" style="margin-bottom:0"><b>Un solo umbral hace parpadear al ventilador.</b> Si la temperatura ronda el límite, se prendería y apagaría sin parar. Usa dos umbrales, por ejemplo encender sobre 30 °C y apagar bajo 28 °C (histéresis). Lo verás funcionando en el laboratorio integrado.</div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="card"><h4>Otras formas de escribir reglas</h4><p>Además de este texto, openHAB permite crear reglas desde la interfaz (cuando, si, entonces), con bloques (Blockly) o con JavaScript.</p></div>
+    <div class="card"><h4>Persistencia</h4><p>Sin ella, openHAB solo conoce el valor actual de cada Item. Un servicio de persistencia (rrd4j, InfluxDB, JDBC y otros) guarda la historia para graficar y analizar. Esa base de datos es la que Grafana puede leer.</p></div>
+  </div>
+</section>
+
+<!-- ============ BLOQUE 3: Grafana ============ -->
+<section class="sec" id="graf" data-title="Qué es Grafana" data-group="Bloque 3 · Grafana">
+  <p class="eyebrow">Tema 3.4</p>
+  <h2>Grafana: paneles para ver tus datos</h2>
+  <p class="lede">Grafana es una plataforma de código abierto para visualizar datos en tableros (dashboards). No guarda tus datos: los consulta en otras fuentes. La versión actual es la 13, publicada en abril de 2026, y por defecto se abre en el puerto 3000.</p>
+  <div class="pipe">
+    <div class="pstep on"><b>Data source</b><span>de dónde vienen los datos</span></div>
+    <div class="pstep on"><b>Consulta</b><span>qué datos pides</span></div>
+    <div class="pstep on"><b>Panel</b><span>cómo se dibujan</span></div>
+    <div class="pstep on"><b>Dashboard</b><span>varios paneles juntos</span></div>
+  </div>
+  <div class="grid3">
+    <div class="card"><h4>Umbrales y unidades</h4><p>Un panel con °C y colores por umbral se entiende en un segundo. Sin unidades, el número no significa nada.</p></div>
+    <div class="card"><h4>Rango de tiempo</h4><p>Eliges qué ventana ver (última hora, últimos 7 días) y cada cuánto se actualiza.</p></div>
+    <div class="card"><h4>Variables</h4><p>Un mismo tablero sirve para varias zonas si la zona es una variable que se elige arriba.</p></div>
+  </div>
+  <h3>Elige la visualización</h3>
+  <p class="mini" style="margin-bottom:10px">Para cada necesidad, decide qué tipo de panel conviene.</p>
+  <div id="vizQs"></div>
+</section>
+
+<section class="sec" id="grafmqtt" data-title="Fuentes de datos">
+  <p class="eyebrow">Bloque 3 · Fuentes de datos</p>
+  <h2>¿De dónde saca Grafana los datos de MQTT?</h2>
+  <p class="lede">Hay dos caminos y cada uno hace cosas distintas. Elegir mal es la causa más común de «mi gráfica está vacía».</p>
+  <div class="rtl"><span class="chip">ESP32</span><span class="arr">→</span><span class="chip">Broker</span><span class="arr">→</span><span class="chip">Plugin MQTT</span><span class="arr">→</span><span class="chip">Grafana</span><span class="mini">&nbsp;en vivo</span></div>
+  <div class="rtl"><span class="chip">ESP32</span><span class="arr">→</span><span class="chip">Broker</span><span class="arr">→</span><span class="chip">openHAB o Telegraf</span><span class="arr">→</span><span class="chip">Base de datos</span><span class="arr">→</span><span class="chip">Grafana</span><span class="mini">&nbsp;con historial</span></div>
+  <div class="tbl" style="margin-top:12px"><table>
+    <thead><tr><th></th><th>Plugin MQTT</th><th>Base de datos de series de tiempo (p. ej. InfluxDB)</th></tr></thead>
+    <tbody>
+      <tr><td>Datos</td><td>Mensajes en vivo, mientras el panel está abierto</td><td>Historial completo</td></tr>
+      <tr><td>Historial</td><td>No guarda nada: al reabrir el panel empieza vacío</td><td>Sí, consultable por rango de tiempo</td></tr>
+      <tr><td>Alertas</td><td>No las soporta</td><td>Sí, con reglas de alerta sobre las consultas</td></tr>
+      <tr><td>Piezas a montar</td><td>Broker y plugin</td><td>Broker, un recolector (openHAB o Telegraf) y la base de datos</td></tr>
+      <tr><td>Conviene para</td><td>Monitoreo en vivo y demostraciones</td><td>Historial, alertas y análisis</td></tr>
+    </tbody></table></div>
+  <div class="callout"><b>Detalles del plugin MQTT.</b> Requiere Grafana 11 o superior y un broker MQTT 3.1.x (no soporta MQTT 5). Se suscribe con QoS 0 y asigna la hora cuando recibe el mensaje, no la que venga en el payload. Se instala con <code>grafana cli plugins install grafana-mqtt-datasource</code> o desde la sección de plugins.</div>
+  <h3>¿Qué fuente usarías?</h3>
+  <div id="srcQs"></div>
+</section>
+
+<!-- ============ INTEGRACIÓN ============ -->
+<section class="sec" id="lab" data-title="Laboratorio integrado" data-group="Integración">
+  <p class="eyebrow">Laboratorio integrado</p>
+  <h2>Todo junto: sensor, broker, openHAB y Grafana</h2>
+  <p class="lede">Mueve la temperatura, publícala y observa cómo viaja el dato. La regla de openHAB enciende el ventilador sobre 30 °C y lo apaga bajo 28 °C. Las primeras 18 lecturas del historial son datos de ejemplo.</p>
+  <div class="sim">
+    <div class="labgrid">
+      <div class="card">
+        <p class="lbl">1 · Sensor ESP32 (publicador)</p>
+        <p class="val" style="margin:8px 0"><span id="labTempV">24.0</span> <small>°C</small></p>
+        <input type="range" id="labTemp" min="15" max="40" step="0.5" value="24" aria-label="Temperatura del sensor">
+        <div class="row" style="margin-top:10px">
+          <button class="btn primary" id="labPub" type="button">Publicar ahora</button>
+          <label class="row" style="gap:6px"><input type="checkbox" id="labAuto"> <span class="mini">Automático cada 2 s</span></label>
+        </div>
+        <p class="mini" style="margin-top:8px">Topic: <code>invernadero/zona1/temperatura</code></p>
+      </div>
+      <div class="card">
+        <p class="lbl">2 · openHAB (suscriptor)</p>
+        <p class="mini" style="margin:8px 0 2px">Invernadero_Temp</p>
+        <p class="val"><span id="labItemT">--</span> <small>°C</small></p>
+        <p class="mini" style="margin:8px 0 2px">Invernadero_Ventilador</p>
+        <div class="row"><span class="pill off" id="labItemF">OFF</span><button class="btn sm" id="labToggle" type="button">Enviar comando</button></div>
+        <label class="row" style="gap:6px;margin-top:10px"><input type="checkbox" id="labRule" checked> <span class="mini">Regla: ON sobre 30 °C, OFF bajo 28 °C</span></label>
+      </div>
+      <div class="card">
+        <p class="lbl">3 · Ventilador (suscriptor)</p>
+        <p style="margin:12px 0"><span class="fanicon" id="labFan"></span> <b id="labFanT" style="margin-left:8px">Apagado</b></p>
+        <p class="mini">Escucha <code>.../ventilador/set</code> y responde en <code>.../ventilador/estado</code> con retain.</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <div class="row" style="justify-content:space-between">
+        <p class="lbl">4 · Grafana · temperatura de la zona 1</p>
+        <div class="row">
+          <div class="seg" role="group" aria-label="Fuente de datos">
+            <button type="button" id="labDb" aria-pressed="true">Base de datos</button>
+            <button type="button" id="labMq" aria-pressed="false">Plugin MQTT</button>
+          </div>
+          <button class="btn sm" id="labPanel" type="button">Cerrar panel</button>
+        </div>
+      </div>
+      <div class="chartbox" style="margin-top:10px"><svg id="labChart" viewBox="0 0 640 250" role="img" aria-label="Gráfica de temperatura"></svg></div>
+      <p class="mini" id="labNote" style="margin-top:8px"></p>
+    </div>
+    <p class="lbl" style="margin:14px 0 6px">Registro del broker</p>
+    <div class="term" id="labTerm" role="log" aria-live="polite" style="height:130px"></div>
+    <ul class="mission" id="labMission"></ul>
+  </div>
+</section>
+
+<section class="sec" id="errores" data-title="Errores comunes">
+  <p class="eyebrow">Errores comunes</p>
+  <h2>Errores comunes y cómo evitarlos</h2>
+  <p class="lede">¿Cuál has cometido ya? Abre cada uno para ver la solución.</p>
+  <div class="accs" id="errs"></div>
+</section>
+
+<section class="sec" id="resuelto" data-title="Caso resuelto y síntesis">
+  <p class="eyebrow">Cierre</p>
+  <h2>Caso resuelto: el invernadero de Valeria</h2>
+  <p class="lede">Cada problema tenía solución con lo que viste hoy. Descubre la respuesta a cada uno.</p>
+  <div class="accs" id="solved"></div>
+  <h3>Síntesis: lo que debes llevarte</h3>
+  <div class="grid3">
+    <div class="card"><h4>Se desconocen entre sí</h4><p>Publicadores y suscriptores solo comparten un topic. El broker los conecta.</p></div>
+    <div class="card"><h4>Topics ordenados</h4><p>Jerarquía clara, minúsculas, sin espacios. Comodines solo al suscribirse.</p></div>
+    <div class="card"><h4>openHAB</h4><p>Binding, Thing, Channel, Item y regla. Persistencia para guardar la historia.</p></div>
+    <div class="card"><h4>Grafana</h4><p>Elige la fuente y el tipo de panel según lo que necesitas ver.</p></div>
+    <div class="card"><h4>En vivo o historial</h4><p>El plugin MQTT transmite en vivo. Para historial y alertas, una base de datos.</p></div>
+  </div>
+  <h3>Reflexión: ¿lo explicas tú?</h3>
+  <div class="accs" id="reflex"></div>
+</section>
+
+<!-- ============ EVALUACIÓN ============ -->
+<section class="sec" id="quiz" data-title="Cuestionario final" data-group="Evaluación" data-merge="1">
+  <p class="eyebrow">Cuestionario final · 10 preguntas</p>
+  <h2>¿Qué tanto te quedó?</h2>
+  <p class="lede">Una pregunta a la vez, con explicación al responder. El orden de las opciones cambia en cada intento.</p>
+  <div class="quiz" id="quizBox"></div>
+</section>
+
+<footer class="end">
+  <h3>Para la siguiente clase</h3>
+  <div class="card">
+    <h4>Tarea: tu cadena IoT de punta a punta</h4>
+    <p>Publica la lectura de tu sensor a un broker Mosquitto (con tu ESP32 o con un script de Python). En openHAB crea un Thing, un Item y una regla. En Grafana arma un tablero con una serie de tiempo y un medidor. Sube todo a tu repositorio con README, <code>.gitignore</code>, <code>secrets.example.h</code> y capturas de pantalla. Entrega la URL del repositorio.</p>
+  </div>
+  <p class="mini" style="margin:14px 0 6px">Para profundizar</p>
+  <ul class="refs">
+    <li>openhab.org, sección Documentation (MQTT Things and Channels Binding).</li>
+    <li>grafana.com/docs, sección MQTT data source.</li>
+    <li>mosquitto.org y mqtt.org, especificación y guías de MQTT.</li>
+  </ul>
+  <p class="mini" style="margin-top:12px">Siguiente tema: 3.5 · Plataformas IoT en la nube</p>
+</footer>
+</main>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+
+/* ---------- tema ---------- */
+var root=document.documentElement;
+var saved=lsGet('c32-theme');if(saved==='dark'||saved==='light')root.setAttribute('data-theme',saved);
+$('#themeBtn').addEventListener('click',function(){
+  var cur=root.getAttribute('data-theme');
+  if(!cur)cur=(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
+  var nxt=cur==='dark'?'light':'dark';root.setAttribute('data-theme',nxt);lsSet('c32-theme',nxt);
+});
+
+/* ---------- bloques de código ---------- */
+$$('.codefig').forEach(function(fig){
+  if(fig.hasAttribute('data-dyn'))return;
+  var code=$('code',fig);if(!code)return;
+  var raw=code.textContent;
+  code.innerHTML=raw.split('\n').map(function(l){
+    return /^\s*(#|\/\/)/.test(l)?'<span class="cm">'+esc(l)+'</span>':esc(l);
+  }).join('\n');
+  var cap=$('figcaption',fig);
+  if(!cap){cap=el('figcaption','','<span></span>');fig.insertBefore(cap,fig.firstChild)}
+  var b=el('button','copy','Copiar');b.type='button';
+  b.addEventListener('click',function(){
+    var done=function(){b.textContent='Copiado';setTimeout(function(){b.textContent='Copiar'},1400)};
+    var fail=function(){var r=document.createRange();r.selectNodeContents(code);var s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Selecciona y copia';setTimeout(function(){b.textContent='Copiar'},1800)};
+    try{navigator.clipboard.writeText(raw).then(done,fail)}catch(e){fail()}
+  });
+  cap.appendChild(b);
+});
+
+/* ---------- pestañas ---------- */
+$$('[data-tabs]').forEach(function(t){
+  var tabs=$$('[role=tab]',t),panels=$$('[role=tabpanel]',t);
+  tabs.forEach(function(b){b.addEventListener('click',function(){
+    tabs.forEach(function(x){x.setAttribute('aria-selected',x===b?'true':'false')});
+    panels.forEach(function(p){p.hidden=p.getAttribute('data-panel')!==b.getAttribute('data-tab')});
+  })});
+});
+
+/* ---------- componentes genéricos ---------- */
+function accordion(host,items){
+  items.forEach(function(it){
+    var a=el('div','acc');var b=el('button','',it.t);b.type='button';b.setAttribute('aria-expanded','false');
+    var body=el('div','body',it.b);body.hidden=true;
+    b.addEventListener('click',function(){var o=b.getAttribute('aria-expanded')==='true';b.setAttribute('aria-expanded',o?'false':'true');body.hidden=o});
+    a.appendChild(b);a.appendChild(body);host.appendChild(a);
+  });
+}
+/* tarjetas con botones de respuesta (labels) y retroalimentación por opción */
+function chooser(host,items,labels){
+  items.forEach(function(it){
+    var c=el('div','card');c.style.marginBottom='12px';
+    c.innerHTML=(it.tag?'<span class="tag">'+esc(it.tag)+'</span>':'')+'<p>'+it.t+'</p>';
+    var box=el('div','row');box.style.marginTop='10px';var fb=el('div');fb.setAttribute('aria-live','polite');
+    labels.forEach(function(l){
+      var b=el('button','btn',esc(l));b.type='button';
+      b.addEventListener('click',function(){
+        $$('.btn',box).forEach(function(x){x.classList.remove('primary')});b.classList.add('primary');
+        var ok=l===it.best;
+        var txt=(it.fb&&it.fb[l])?it.fb[l]:(ok?it.why:'No es la mejor opción. '+it.why);
+        fb.innerHTML='<div class="fb '+(ok?'ok':'bad')+'" style="margin-top:10px">'+(ok?'<b>Correcto.</b> ':'')+txt+'</div>';
+      });box.appendChild(b);
+    });
+    c.appendChild(box);c.appendChild(fb);host.appendChild(c);
+  });
+}
+/* preguntas de opción múltiple sueltas: o[0] es la correcta */
+function mcq(host,items){
+  items.forEach(function(it){
+    var c=el('div','card');c.style.marginBottom='12px';
+    c.innerHTML='<p style="margin-bottom:10px">'+it.q+'</p>';
+    var ob=el('div','opts');var fb=el('div');fb.setAttribute('aria-live','polite');
+    shuffle(it.o.map(function(t,i){return {t:t,ok:i===0}})).forEach(function(o){
+      var b=el('button','opt',o.t);b.type='button';
+      b.addEventListener('click',function(){
+        $$('.opt',ob).forEach(function(x){x.classList.remove('ok','bad')});b.classList.add(o.ok?'ok':'bad');
+        fb.innerHTML='<div class="fb '+(o.ok?'ok':'bad')+'"><b>'+(o.ok?'Correcto.':'No es esa.')+'</b> '+it.why+'</div>';
+      });ob.appendChild(b);
+    });
+    c.appendChild(ob);c.appendChild(fb);host.appendChild(c);
+  });
+}
+/* clasificación de filas con dos botones */
+function classify(host,rows,labels,scoreEl,resetBtn,total){
+  var answers;
+  function upd(){
+    var n=Object.keys(answers).length,ok=Object.keys(answers).filter(function(k){return answers[k]}).length;
+    scoreEl.textContent='Aciertos: '+ok+' de '+rows.length+(n<rows.length?' ('+n+' respondidos)':'');
+  }
+  function build(){
+    answers={};host.innerHTML='';
+    rows.forEach(function(r,i){
+      var row=el('div','ignrow');row.appendChild(el('code','',esc(r[0])));
+      var box=el('div','row'),why=el('div','why','');
+      [[true,labels[0]],[false,labels[1]]].forEach(function(o){
+        var b=el('button','btn sm',o[1]);b.type='button';
+        b.addEventListener('click',function(){
+          var ok=o[0]===r[1];answers[i]=ok;row.className='ignrow '+(ok?'ok':'bad');
+          why.textContent=(ok?'Correcto. ':'No. ')+r[2];
+          $$('button',box).forEach(function(x){x.disabled=true});upd();
+        });box.appendChild(b);
+      });
+      row.appendChild(box);row.appendChild(why);host.appendChild(row);
+    });upd();
+  }
+  resetBtn.addEventListener('click',build);build();
+}
+/* recorrido paso a paso */
+function stepper(listEl,nextBtn,resetBtn,steps,render){
+  var k=0;
+  function draw(){
+    listEl.innerHTML='';
+    for(var i=0;i<k;i++)listEl.appendChild(render(steps[i],i));
+    nextBtn.disabled=k>=steps.length;
+  }
+  nextBtn.addEventListener('click',function(){if(k<steps.length){k++;draw()}});
+  resetBtn.addEventListener('click',function(){k=0;draw()});
+  draw();
+  return {set:function(n){k=n;draw()},reset:function(){k=0;draw()},count:function(){return k}};
+}
+
+/* ---------- MQTT: coincidencia de filtros y broker simulado ---------- */
+function validFilter(f){
+  if(!f)return false;
+  var lv=f.split('/');
+  for(var i=0;i<lv.length;i++){
+    var l=lv[i];
+    if(l.indexOf('#')>-1&&(l!=='#'||i!==lv.length-1))return false;
+    if(l.indexOf('+')>-1&&l!=='+')return false;
+  }
+  return true;
+}
+function mqttMatch(f,t){
+  var fl=f.split('/'),tl=t.split('/');
+  if(t.charAt(0)==='$'&&(fl[0]==='#'||fl[0]==='+'))return false;
+  for(var i=0;i<fl.length;i++){
+    if(fl[i]==='#')return true;
+    if(i>=tl.length)return false;
+    if(fl[i]!=='+'&&fl[i]!==tl[i])return false;
+  }
+  return fl.length===tl.length;
+}
+function Broker(onLog){this.subs=[];this.retained={};this.onLog=onLog||function(){}}
+Broker.prototype.publish=function(topic,payload,opts){
+  opts=opts||{};
+  if(opts.retain){
+    if(payload==='')delete this.retained[topic];else this.retained[topic]=payload;
+  }
+  this.onLog(topic,payload,opts);
+  this.subs.slice().forEach(function(s){
+    if(mqttMatch(s.filter,topic))s.cb(topic,payload,{retained:false});
+  });
+};
+Broker.prototype.subscribe=function(filter,cb){
+  var s={filter:filter,cb:cb};this.subs.push(s);
+  var self=this;
+  Object.keys(this.retained).forEach(function(t){
+    if(mqttMatch(filter,t))cb(t,self.retained[t],{retained:true});
+  });
+  return s;
+};
+Broker.prototype.unsubscribe=function(s){var i=this.subs.indexOf(s);if(i>-1)this.subs.splice(i,1)};
+
+/* ---------- inicio: camino del dato ---------- */
+(function(){
+  var nodes=[
+    {t:'Sensor ESP32',s:'publicador',d:'El ESP32 con DHT11 lee la temperatura y la <b>publica</b> en <code>invernadero/zona1/temperatura</code>. No sabe quién la leerá ni cuántos serán.'},
+    {t:'Broker MQTT',s:'el cartero',d:'Por ejemplo Mosquitto. Recibe cada mensaje y lo reenvía a quien esté suscrito a ese topic. Gracias a él, publicadores y suscriptores no necesitan conocerse (tema 3.2.1).'},
+    {t:'openHAB',s:'suscriptor y automatización',d:'Se suscribe al topic y convierte el mensaje en un Item. Sus reglas pueden <b>publicar</b> comandos, como <code>.../ventilador/set</code>. Es el tema 3.3.'},
+    {t:'Base de datos',s:'historial',d:'Una base de series de tiempo, por ejemplo InfluxDB, guarda cada lectura con su hora. Sin ella no hay historial. La puede alimentar la persistencia de openHAB.'},
+    {t:'Grafana',s:'paneles',d:'Dibuja paneles y tableros. Lee la base de datos para el historial o, con el plugin MQTT, escucha el broker para mostrar datos en vivo. Es el tema 3.4.'}
+  ];
+  var host=$('#archNodes'),info=$('#archInfo');
+  function sel(i){
+    $$('.pstep',host).forEach(function(x,j){x.classList.toggle('on',j===i)});
+    info.innerHTML='<h4>'+nodes[i].t+'</h4><p>'+nodes[i].d+'</p>';
+  }
+  nodes.forEach(function(n,i){var b=el('button','pstep','<b>'+n.t+'</b><span>'+n.s+'</span>');b.type='button';b.addEventListener('click',function(){sel(i)});host.appendChild(b)});
+  sel(0);
+})();
+
+accordion($('#caseQs'),[
+  {t:'¿Qué problema hay en que el tablero le pregunte a cada sensor?',b:'Pista: ¿quién tiene que estar despierto y respondiendo cada vez?'},
+  {t:'¿Cómo permitir tantos tableros como quieras sin tocar los sensores?',b:'Pista: ¿y si los sensores solo dejaran sus lecturas en un lugar común y cada tablero las recogiera de ahí?'},
+  {t:'¿Cómo enterarse de que un sensor se apagó?',b:'Pista: ¿puede alguien avisar por el sensor cuando este ya no puede hablar?'}
+]);
+accordion($('#errs'),[
+  {t:'Dos dispositivos con el mismo clientId',b:'El broker expulsa al primero y se reconectan en bucle. Usa un identificador distinto por dispositivo.'},
+  {t:'Olvidar mqtt.loop() en el ESP32',b:'No llegan mensajes y se pierde la conexión. Llama a loop() en cada vuelta del programa principal.'},
+  {t:'No volver a suscribirse al reconectar',b:'Tras una caída, el cliente conecta pero ya no recibe nada. Suscríbete dentro de la rutina de conexión.'},
+  {t:'Publicar comandos con retain',b:'El dispositivo ejecuta el comando viejo cada vez que se reconecta. Retén estados, no comandos.'},
+  {t:'Suscribirse a # para todo',b:'Recibes más mensajes de los que puedes procesar. Filtra solo lo que necesitas.'},
+  {t:'Broker abierto sin usuario ni TLS',b:'Cualquiera puede publicar o leer tus topics. Usa usuario y clave, TLS (puerto 8883) y no expongas el broker sin protección.'},
+  {t:'Crear un Item en openHAB sin vincularlo a un canal',b:'El Item nunca cambia. Verifica el enlace (link) entre canal e Item.'},
+  {t:'Esperar historial sin persistencia',b:'openHAB solo recuerda el valor actual. Configura un servicio de persistencia para guardar la historia.'},
+  {t:'Esperar historial con el plugin MQTT de Grafana',b:'Ese plugin solo transmite en vivo. Guarda los mensajes en una base de datos y úsala como fuente.'},
+  {t:'Paneles sin unidades ni umbrales',b:'Un número sin °C o sin colores no se interpreta. Configura unidad y umbrales en cada panel.'}
+]);
+accordion($('#solved'),[
+  {t:'Los sensores respondían preguntas cada segundo y las baterías duraban dos días',b:'<b>Solución:</b> cada sensor <b>publica</b> su lectura cada cierto tiempo, o cuando cambia, y no atiende preguntas. Trabaja menos, así que el consumo baja.'},
+  {t:'La aplicación se congelaba si un sensor no respondía',b:'<b>Solución:</b> el tablero es un <b>suscriptor</b>: espera mensajes en lugar de insistir a cada sensor. Si uno calla, los demás siguen llegando.'},
+  {t:'El segundo tablero obligaba a reprogramar los seis sensores',b:'<b>Solución:</b> basta un suscriptor nuevo al mismo filtro, por ejemplo <code>invernadero/+/temperatura</code>. Los sensores no cambian.'},
+  {t:'Valeria no se enteraba cuando un sensor se apagaba',b:'<b>Solución:</b> mensaje de última voluntad (LWT) con <code>estado = offline</code> retenido. El tablero lo muestra al instante.'},
+  {t:'Faltaba la historia de la semana',b:'<b>Solución:</b> persistencia en openHAB hacia una base de series de tiempo y Grafana leyendo esa base.'}
+]);
+accordion($('#reflex'),[
+  {t:'¿Qué diferencia hay entre un publicador y un suscriptor?',b:'El publicador envía mensajes a un topic. El suscriptor declara un filtro y recibe lo que coincida. Un mismo cliente puede ser ambos.'},
+  {t:'¿Cuándo usarías retain y cuándo no?',b:'Con estados que cambian poco, como «sensor en línea». No con comandos, porque se reejecutarían al reconectar.'},
+  {t:'¿Cómo llega un mensaje MQTT a un Item de openHAB?',b:'El binding se suscribe al stateTopic del canal; el canal actualiza el Item vinculado, y las reglas e interfaces reaccionan.'},
+  {t:'¿Por qué una gráfica de MQTT en Grafana puede salir vacía al abrirla?',b:'El plugin MQTT solo muestra lo recibido mientras el panel está abierto. Para historial, hay que consultar una base de datos.'}
+]);
+
+/* ---------- topics: probador y retos ---------- */
+(function(){
+  var T=['invernadero/zona1/temperatura','invernadero/zona1/humedad','invernadero/zona2/temperatura','invernadero/zona2/humedad','invernadero/zona1/ventilador/estado','invernadero/zona1/ventilador/set','casa/sala/temperatura','invernadero','$SYS/broker/uptime'];
+  var inp=$('#tpFilter'),list=$('#tpList'),msg=$('#tpMsg');
+  var presets=['invernadero/+/temperatura','invernadero/#','invernadero/zona1/#','+/+/temperatura','#','invernadero/+'];
+  var ch=$('#tpChips');
+  presets.forEach(function(p){var b=el('button','chip',esc(p));b.type='button';b.style.fontFamily='var(--f-mono)';b.addEventListener('click',function(){inp.value=p;render()});ch.appendChild(b)});
+  var C=[
+    {t:'Recibe la temperatura de todas las zonas del invernadero, y nada más.',goal:[0,2]},
+    {t:'Recibe todo lo que ocurre en la zona 1 del invernadero.',goal:[0,1,4,5]},
+    {t:'Recibe solo los comandos (set) de los ventiladores de cualquier zona.',goal:[5]}
+  ];
+  var chHost=$('#tpChallenges'),chEls=[];
+  C.forEach(function(c,i){var d=el('div','challenge',esc(c.t));chHost.appendChild(d);chEls.push(d)});
+  function hits(f){var h=[];if(validFilter(f))T.forEach(function(t,i){if(mqttMatch(f,t))h.push(i)});return h}
+  function render(){
+    var f=inp.value.trim(),ok=validFilter(f);
+    msg.textContent=ok?'':(f?'Filtro no válido: # solo puede ir al final y solo, y + debe ocupar un nivel completo.':'Escribe un filtro.');
+    list.innerHTML='';var h=hits(f);
+    T.forEach(function(t,i){
+      var m=h.indexOf(i)>-1;
+      var li=el('li',m?'hit':'miss','<span>'+esc(t)+'</span><span class="badge">'+(m?'recibe':'no recibe')+'</span>');
+      list.appendChild(li);
+    });
+    C.forEach(function(c,i){
+      var same=h.length===c.goal.length&&c.goal.every(function(g){return h.indexOf(g)>-1});
+      chEls[i].classList.toggle('done',same&&ok);
+    });
+  }
+  inp.addEventListener('input',render);render();
+})();
+
+/* ---------- simulador pub/sub ---------- */
+(function(){
+  var log=$('#mqLog'),B,subs,n,did,sensorOn;
+  var T_EST='invernadero/zona1/estado';
+  function line(t,c){var d=el('div',c||'');d.textContent=t;log.appendChild(d);log.scrollTop=log.scrollHeight}
+  function rnd(a,b,d){return (a+Math.random()*(b-a)).toFixed(d)}
+  function reset(){
+    did={pub:false,ret:false,lwt:false};subs=[];n=0;sensorOn=true;log.innerHTML='';
+    B=new Broker(function(t,p,o){line('PUBLISH '+t+' = '+(p===''?'(vacío)':p)+(o.retain?'  [retain]':'')+(o.will?'  [LWT]':''),o.will?'hint':'')});
+    line('# El sensor de la zona 1 se conecta y publica su estado.','cm');
+    B.publish(T_EST,'online',{retain:true});
+    addSub('invernadero/+/temperatura',true);addSub('invernadero/#',true);
+    render();
+  }
+  function addSub(f,silent){
+    var s={name:'Tablero '+String.fromCharCode(65+n),filter:f,inbox:[],count:0};n++;
+    s.h=B.subscribe(f,function(t,p,info){
+      s.count++;s.inbox.unshift({t:t,p:p,r:info.retained});s.inbox=s.inbox.slice(0,4);
+      if(info.retained&&!silent)did.ret=true;
+      render();
+    });
+    subs.push(s);
+    if(!silent)line('SUBSCRIBE '+f+'  ('+s.name+')','cm');
+    return s;
+  }
+  function render(){
+    var h='';
+    Object.keys(B.retained).forEach(function(t){h+='<li><b>'+esc(t)+'</b> = '+esc(B.retained[t])+'</li>'});
+    $('#mqRet').innerHTML=h||'<li class="mini">Ninguno</li>';
+    var host=$('#mqSubs');host.innerHTML='';
+    subs.forEach(function(s,i){
+      var b=el('div','subbox','<h4><span>'+esc(s.name)+'</span><button class="btn sm" type="button">Quitar</button></h4><div class="flt">'+esc(s.filter)+'</div><div class="mini">Recibidos: '+s.count+'</div>');
+      $('button',b).addEventListener('click',function(){B.unsubscribe(s.h);subs.splice(i,1);line('UNSUBSCRIBE '+s.filter+'  ('+s.name+')','cm');render()});
+      s.inbox.forEach(function(m){b.appendChild(el('div','msg'+(m.r?' ret':''),esc(m.t)+' = <b>'+esc(m.p)+'</b>'+(m.r?' <small>(retenido)</small>':'')))});
+      host.appendChild(b);
+    });
+    var st=$('#mqState');st.textContent=sensorOn?'Sensor zona 1 en línea':'Sensor zona 1 sin conexión';st.className='pill'+(sensorOn?'':' off');
+    $('#mqP1').disabled=!sensorOn;$('#mqCut').disabled=!sensorOn;$('#mqBack').disabled=sensorOn;
+    var items=[
+      [did.pub,'Publicaste un mensaje y viste qué tableros lo recibieron'],
+      [did.ret,'Un suscriptor nuevo recibió de inmediato un mensaje retenido'],
+      [did.lwt,'Cortaste la energía y el broker publicó la última voluntad']
+    ];
+    $('#mqMission').innerHTML=items.map(function(i){return '<li class="'+(i[0]?'done':'')+'">'+i[1]+'</li>'}).join('');
+  }
+  function pubQuick(topic,payload){B.publish(topic,payload,{retain:$('#mqRetain').checked});did.pub=true;render()}
+  $('#mqP1').addEventListener('click',function(){pubQuick('invernadero/zona1/temperatura',rnd(22,28,1))});
+  $('#mqP2').addEventListener('click',function(){pubQuick('invernadero/zona2/humedad',rnd(50,80,0))});
+  $('#mqP3').addEventListener('click',function(){pubQuick('casa/sala/temperatura',rnd(19,26,1))});
+  $('#mqPub').addEventListener('click',function(){
+    var t=$('#mqTopic').value.trim(),p=$('#mqPayload').value;
+    if(!t){$('#mqErr').textContent='Escribe el topic.';return}
+    if(/[+#]/.test(t)){$('#mqErr').textContent='Un topic de publicación no puede llevar comodines (+ o #).';return}
+    $('#mqErr').textContent='';
+    if(p===''&&$('#mqRetain').checked)line('# Payload vacío con retain: se borra el mensaje retenido de ese topic.','cm');
+    pubQuick(t,p);
+  });
+  $('#mqSub').addEventListener('click',function(){
+    var f=$('#mqFilter').value.trim();
+    if(!validFilter(f)){$('#mqErr').textContent='Filtro no válido: # solo va al final y solo, y + ocupa un nivel completo.';return}
+    $('#mqErr').textContent='';addSub(f,false);render();
+  });
+  $('#mqCut').addEventListener('click',function(){
+    sensorOn=false;did.lwt=true;
+    line('# El sensor perdió la energía sin enviar DISCONNECT.','cm');
+    B.publish(T_EST,'offline',{retain:true,will:true});render();
+  });
+  $('#mqBack').addEventListener('click',function(){
+    sensorOn=true;line('# El sensor se reconecta.','cm');B.publish(T_EST,'online',{retain:true});render();
+  });
+  $('#mqReset').addEventListener('click',reset);
+  reset();
+})();
+
+/* ---------- QoS ---------- */
+(function(){
+  var D=[
+    {n:'QoS 0',steps:[['Publicador','Broker','PUBLISH',false]],note:'<b>Como máximo una vez.</b> Se envía y se olvida; si la red falla, el mensaje se pierde. Es lo más rápido y barato.'},
+    {n:'QoS 1',steps:[['Publicador','Broker','PUBLISH',false],['Broker','Publicador','PUBACK',true]],note:'<b>Al menos una vez.</b> Si no llega la confirmación (PUBACK), el publicador reenvía. Puede haber duplicados.'},
+    {n:'QoS 2',steps:[['Publicador','Broker','PUBLISH',false],['Broker','Publicador','PUBREC',true],['Publicador','Broker','PUBREL',false],['Broker','Publicador','PUBCOMP',true]],note:'<b>Exactamente una vez.</b> Cuatro mensajes por cada publicación: es lo más lento y el que más tráfico genera.'}
+  ];
+  var sel=0,k=0,host=$('#qosSel'),ul=$('#qosSteps'),note=$('#qosNote');
+  function draw(){
+    $$('.btn',host).forEach(function(b,i){b.classList.toggle('primary',i===sel)});
+    ul.innerHTML='';
+    D[sel].steps.forEach(function(s,i){
+      if(i<k)ul.appendChild(el('li',s[3]?'back':'','<span>'+s[0]+'</span><span class="pk">'+s[2]+'</span><span class="r">'+s[1]+'</span>'));
+    });
+    $('#qosNext').disabled=k>=D[sel].steps.length;
+    if(k>=D[sel].steps.length){note.style.display='';note.innerHTML=D[sel].note}else{note.style.display='none'}
+    if(k===0){ul.innerHTML='<li class="mini" style="display:block;border-style:dashed">Pulsa «Siguiente paso» para ver los mensajes que se intercambian.</li>'}
+  }
+  D.forEach(function(d,i){var b=el('button','btn',d.n);b.type='button';b.addEventListener('click',function(){sel=i;k=0;draw()});host.appendChild(b)});
+  $('#qosNext').addEventListener('click',function(){k++;draw()});
+  $('#qosReset').addEventListener('click',function(){k=0;draw()});
+  draw();
+  chooser($('#qosScen'),[
+    {tag:'Caso 1',t:'Un sensor de temperatura publica una lectura cada 5 segundos.',best:'QoS 0',why:'Se publica seguido: perder una lectura no cambia nada y la siguiente llega pronto.'},
+    {tag:'Caso 2',t:'Una alarma de humo envía «alerta» al celular.',best:'QoS 1',why:'No puede perderse, y un aviso duplicado no hace daño. QoS 1 garantiza que llega al menos una vez.',fb:{'QoS 2':'Funciona, pero un aviso repetido es inofensivo y QoS 2 cuesta más. QoS 1 basta.'}},
+    {tag:'Caso 3',t:'Un comando «dosificar una unidad de fertilizante». Si llegara dos veces, se dosificaría el doble.',best:'QoS 2',why:'Un duplicado causaría un daño. QoS 2 asegura exactamente una entrega.',fb:{'QoS 1':'Puede entregarse duplicado y dosificaría dos veces. Aquí conviene QoS 2.'}}
+  ],['QoS 0','QoS 1','QoS 2']);
+})();
+
+/* ---------- actividad de topics ---------- */
+classify($('#topicClass'),[
+  ['invernadero/zona1/temperatura',true,'Jerarquía clara, minúsculas y sin espacios.'],
+  ['/Invernadero/Zona 1/Temperatura',false,'La barra inicial crea un nivel vacío, y los espacios y mayúsculas provocan errores porque los topics distinguen mayúsculas.'],
+  ['temp',false,'Es demasiado genérico: no dice dónde ni de qué y choca con otros dispositivos.'],
+  ['invernadero/zona1/temperatura/24.5',false,'El valor va en el payload, no en el topic.'],
+  ['casa/sala/luz/set',true,'Ubicación, dispositivo y un sufijo set para los comandos, separados del estado.'],
+  ['invernadero/#',false,'Los comodines solo valen al suscribirse. No se puede publicar en un topic con # o +.'],
+  ['esp32-a4f2/lectura1',false,'Nombra el dispositivo, no lo que mide ni dónde. Es difícil de leer y cambia si reemplazas la placa.'],
+  ['granja/corral2/humedad',true,'Lugar, subzona y magnitud: se lee solo y admite filtros como granja/+/humedad.']
+],['Buen topic','Mejorable'],$('#tcScore'),$('#tcReset'));
+
+/* ---------- openHAB: modelo ---------- */
+(function(){
+  var nodes=[
+    {t:'Binding',s:'el traductor',d:'Un add-on que sabe hablar un protocolo o con una marca. Aquí, el <b>MQTT Binding</b>. Se instala una vez desde Add-ons.'},
+    {t:'Thing',s:'el aparato',d:'El dispositivo o servicio. Primero el <b>bridge «MQTT Broker»</b> (la conexión con Mosquitto) y luego un <b>Generic MQTT Thing</b> que representa tu ESP32 del invernadero.'},
+    {t:'Channel',s:'una función',d:'Cada capacidad del Thing: <b>temperatura</b> (número) y <b>ventilador</b> (switch). Aquí se escriben el <code>stateTopic</code> y el <code>commandTopic</code>.'},
+    {t:'Item',s:'tu copia',d:'Lo que usan las reglas e interfaces: <code>Invernadero_Temp</code>, <code>Invernadero_Ventilador</code>. Un Item solo funciona si está <b>vinculado</b> a un canal.'},
+    {t:'Regla / interfaz',s:'qué haces con él',d:'Una regla reacciona a cambios de Items y manda comandos. Las páginas de Main UI los muestran y permiten controlarlos.'}
+  ];
+  var host=$('#ohNodes'),info=$('#ohInfo');
+  function sel(i){$$('.pstep',host).forEach(function(x,j){x.classList.toggle('on',j===i)});info.innerHTML='<h4>'+nodes[i].t+'</h4><p>'+nodes[i].d+'</p>'}
+  nodes.forEach(function(nn,i){var b=el('button','pstep','<b>'+nn.t+'</b><span>'+nn.s+'</span>');b.type='button';b.addEventListener('click',function(){sel(i)});host.appendChild(b)});
+  sel(0);
+  stepper($('#ohFlow'),$('#ohFlowNext'),$('#ohFlowReset'),[
+    'El ESP32 publica <code>26.4</code> en <code>invernadero/zona1/temperatura</code>.',
+    'El broker entrega el mensaje al <b>MQTT Binding</b>, que está suscrito a ese topic por el <code>stateTopic</code> del canal.',
+    'El canal <code>temperatura</code> actualiza el Item <code>Invernadero_Temp</code> a 26.4 °C.',
+    'Una regla se dispara por el cambio del Item. Si 26.4 supera el umbral, envía un comando al Item del ventilador.',
+    'El canal <code>ventilador</code> publica el comando en su <code>commandTopic</code>, y el dispositivo, suscrito a ese topic, lo ejecuta.'
+  ],function(t){return el('li','',t)});
+})();
+
+/* ---------- openHAB: canal ---------- */
+mcq($('#ohQs'),[
+  {q:'El ESP32 publica <code>{"temp": 23.4, "hum": 61}</code> en un solo topic y quieres que el canal muestre solo la temperatura. ¿Qué configuras?',
+   o:['transformationPattern con JSONPATH($.temp)','commandTopic con el mismo topic','retained en verdadero','qos en 2'],why:'La transformación extrae el campo del JSON antes de actualizar el canal.'},
+  {q:'Quieres ver el estado del ventilador en openHAB pero sin poder encenderlo desde ahí. ¿Qué haces?',
+   o:['Defines stateTopic y dejas vacío el commandTopic','Defines commandTopic y dejas vacío el stateTopic','Activas retained','Cambias el tipo de canal a string'],why:'Un canal sin commandTopic es de solo lectura.'},
+  {q:'Tu relé reporta <code>1</code> y <code>0</code> en lugar de ON y OFF. ¿Cómo hacer que un canal switch los entienda?',
+   o:['Configurar los parámetros on y off del canal con "1" y "0"','Cambiar el firmware para que escriba "ON"','Usar un canal contact','No se puede'],why:'Los parámetros on y off del canal indican qué payload significa cada estado.'},
+  {q:'Quieres que openHAB marque el dispositivo como no disponible cuando se desconecta. ¿Qué configuras?',
+   o:['El availabilityTopic del Generic MQTT Thing, junto con un mensaje LWT en el dispositivo','El puerto del bridge en 8883','El Item como Number','Un segundo broker'],why:'El Thing escucha el topic de disponibilidad (por ejemplo, online y offline) y cambia su estado.'}
+]);
+
+/* ---------- constructor de regla ---------- */
+(function(){
+  var out=$('#rbOut');
+  function draw(){
+    var cmp=$('#rbCmp').value,val=parseFloat($('#rbVal').value);if(isNaN(val))val=0;
+    var cmd=$('#rbCmd').value;
+    out.textContent='rule "Ventilador por temperatura"\nwhen\n    Item Invernadero_Temp changed\nthen\n    if (Invernadero_Temp.state '+cmp+' '+val+'|°C) {\n        Invernadero_Ventilador.sendCommand('+cmd+')\n    }\nend';
+  }
+  ['rbCmp','rbVal','rbCmd'].forEach(function(id){$('#'+id).addEventListener('input',draw);$('#'+id).addEventListener('change',draw)});
+  draw();
+})();
+
+/* ---------- Grafana ---------- */
+chooser($('#vizQs'),[
+  {tag:'Necesidad 1',t:'La evolución de la temperatura durante las últimas 24 horas.',best:'Time series',why:'Una serie de tiempo muestra cómo cambia un valor a lo largo del tiempo.'},
+  {tag:'Necesidad 2',t:'La humedad actual como un número grande, con color según su nivel.',best:'Stat',why:'Stat resalta un solo valor, con color por umbrales.'},
+  {tag:'Necesidad 3',t:'El nivel de un depósito, de 0 a 100 %, con zonas verde, amarilla y roja.',best:'Gauge',why:'El medidor muestra un valor dentro de un rango, con zonas de color.'},
+  {tag:'Necesidad 4',t:'Los periodos en que el ventilador estuvo encendido o apagado durante el día.',best:'State timeline',why:'La línea de estados dibuja franjas por cada estado a lo largo del tiempo.'},
+  {tag:'Necesidad 5',t:'Las últimas 20 lecturas con su hora exacta, para revisarlas una por una.',best:'Table',why:'Una tabla muestra cada registro con sus columnas.'}
+],['Time series','Stat','Gauge','State timeline','Table']);
+chooser($('#srcQs'),[
+  {tag:'Caso 1',t:'Quieres mostrar en clase, en vivo, cómo reacciona la lectura de un sensor mientras lo calientas con la mano.',best:'Plugin MQTT',why:'Es una demostración en vivo, y el plugin MQTT lo resuelve con menos piezas.'},
+  {tag:'Caso 2',t:'Necesitas la gráfica de la temperatura del último mes.',best:'Base de datos',why:'El plugin MQTT no guarda historial. Una base de series de tiempo conserva cada lectura.'},
+  {tag:'Caso 3',t:'Quieres recibir un correo si la temperatura supera 35 °C.',best:'Base de datos',why:'El plugin MQTT no soporta alertas. Con una base de datos como fuente, Grafana puede evaluar una regla de alerta.'}
+],['Plugin MQTT','Base de datos']);
+
+/* ---------- laboratorio integrado ---------- */
+(function(){
+  var T_TEMP='invernadero/zona1/temperatura',T_SET='invernadero/zona1/ventilador/set',T_EST='invernadero/zona1/ventilador/estado';
+  var term=$('#labTerm');
+  function line(t,c){var d=el('div',c||'');d.textContent=t;term.appendChild(d);term.scrollTop=term.scrollHeight;while(term.childNodes.length>80)term.removeChild(term.firstChild)}
+  var B=new Broker(function(t,p,o){line('PUBLISH '+t+' = '+p+(o.retain?'  [retain]':''))});
+  var S={itemTemp:null,itemFan:false,fan:false,hist:[],stream:[],mode:'db',open:true,gsub:null,timer:null};
+  var did={hot:false,cool:false,stream:false};
+  for(var i=0;i<18;i++){S.hist.push({v:+(24.5+Math.sin(i/2.4)*1.6+(i%3)*0.2).toFixed(1),fan:false})}
+  S.itemTemp=S.hist[S.hist.length-1].v;
+  /* ventilador (dispositivo) */
+  B.subscribe(T_SET,function(t,p){S.fan=(p==='ON');B.publish(T_EST,S.fan?'ON':'OFF',{retain:true});render()});
+  /* openHAB: estado del ventilador y temperatura */
+  B.subscribe(T_EST,function(t,p){S.itemFan=(p==='ON');render()});
+  B.subscribe(T_TEMP,function(t,p){
+    var v=parseFloat(p);if(isNaN(v))return;
+    S.itemTemp=v;
+    if($('#labRule').checked){
+      if(v>30&&!S.itemFan){line('openHAB · regla «Ventilador por calor»: '+v+' > 30 → ON','hint');did.hot=true;B.publish(T_SET,'ON')}
+      else if(v<28&&S.itemFan){line('openHAB · regla «Ventilador por calor»: '+v+' < 28 → OFF','hint');did.cool=true;B.publish(T_SET,'OFF')}
+    }
+    S.hist.push({v:v,fan:S.fan});if(S.hist.length>300)S.hist.shift();
+    render();
+  });
+  function openStream(){
+    S.stream=[];
+    S.gsub=B.subscribe(T_TEMP,function(t,p){var v=parseFloat(p);if(!isNaN(v)){S.stream.push({v:v,fan:S.fan});if(S.stream.length>300)S.stream.shift();draw()}});
+  }
+  openStream();
+  function publish(){
+    var base=parseFloat($('#labTemp').value);
+    B.publish(T_TEMP,base.toFixed(1));
+  }
+  function draw(){
+    var svg=$('#labChart'),W=640,H=250,L=44,R=14,Tt=14,Bt=56;
+    var note=$('#labNote');
+    note.textContent=S.mode==='db'?'Fuente: base de datos de series de tiempo, alimentada por la persistencia de openHAB. Muestra el historial aunque el panel haya estado cerrado.':'Fuente: plugin MQTT (streaming). Solo muestra los mensajes recibidos mientras el panel estuvo abierto y no guarda historial.';
+    if(!S.open){svg.innerHTML='<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="none"/><text x="'+(W/2)+'" y="'+(H/2)+'" text-anchor="middle" font-size="14">Panel cerrado</text>';return}
+    var data=(S.mode==='db'?S.hist:S.stream).slice(-40);
+    var yMin=14,yMax=42,ph=H-Tt-Bt,pw=W-L-R;
+    function Y(v){return Tt+ph*(1-(v-yMin)/(yMax-yMin))}
+    var N=40,step=pw/(N-1);
+    function X(i){return L+i*step}
+    var s='';
+    [15,20,25,30,35,40].forEach(function(g){
+      s+='<line x1="'+L+'" y1="'+Y(g)+'" x2="'+(W-R)+'" y2="'+Y(g)+'" stroke="var(--line)"/><text x="'+(L-6)+'" y="'+(Y(g)+4)+'" text-anchor="end" font-size="11">'+g+'</text>';
+    });
+    s+='<text x="6" y="'+(Tt+8)+'" font-size="11">°C</text>';
+    s+='<line x1="'+L+'" y1="'+Y(28)+'" x2="'+(W-R)+'" y2="'+Y(28)+'" stroke="var(--orange)" stroke-dasharray="4 4"/><text x="'+(W-R-2)+'" y="'+(Y(28)+13)+'" text-anchor="end" font-size="10" style="fill:var(--orange)">apaga 28</text>';
+    s+='<line x1="'+L+'" y1="'+Y(30)+'" x2="'+(W-R)+'" y2="'+Y(30)+'" stroke="var(--bad)" stroke-dasharray="4 4"/><text x="'+(W-R-2)+'" y="'+(Y(30)-4)+'" text-anchor="end" font-size="10" style="fill:var(--bad)">enciende 30</text>';
+    if(!data.length){
+      s+='<text x="'+(W/2)+'" y="'+(H/2-10)+'" text-anchor="middle" font-size="13">Sin datos todavía</text><text x="'+(W/2)+'" y="'+(H/2+10)+'" text-anchor="middle" font-size="12">Publica una lectura: este panel solo muestra lo recibido mientras estuvo abierto.</text>';
+    }else{
+      var pts=data.map(function(d,i){return X(i)+','+Y(d.v)}).join(' ');
+      s+='<polyline points="'+pts+'" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>';
+      data.forEach(function(d,i){s+='<circle cx="'+X(i)+'" cy="'+Y(d.v)+'" r="'+(d.v>30?4:3)+'" fill="'+(d.v>30?'var(--bad)':'var(--accent)')+'"/>'});
+      /* franja del ventilador */
+      var by=H-Bt+18;
+      s+='<text x="'+(L-6)+'" y="'+(by+9)+'" text-anchor="end" font-size="10">ventilador</text>';
+      s+='<rect x="'+L+'" y="'+by+'" width="'+pw+'" height="12" rx="3" fill="var(--surface-2)"/>';
+      data.forEach(function(d,i){if(d.fan)s+='<rect x="'+(X(i)-step/2<L?L:X(i)-step/2)+'" y="'+by+'" width="'+step+'" height="12" fill="var(--teal)"/>'});
+    }
+    s+='<text x="'+L+'" y="'+(H-6)+'" font-size="11">tiempo →  (últimas '+N+' lecturas)</text>';
+    svg.innerHTML=s;
+  }
+  function render(){
+    $('#labTempV').textContent=parseFloat($('#labTemp').value).toFixed(1);
+    $('#labItemT').textContent=S.itemTemp==null?'--':S.itemTemp.toFixed(1);
+    var f=$('#labItemF');f.textContent=S.itemFan?'ON':'OFF';f.className='pill'+(S.itemFan?'':' off');
+    $('#labFan').className='fanicon'+(S.fan?' on':'');$('#labFanT').textContent=S.fan?'Encendido':'Apagado';
+    var items=[
+      [did.hot,'Subiste la temperatura sobre 30 °C y la regla encendió el ventilador'],
+      [did.cool,'Bajaste de 28 °C y la regla lo apagó'],
+      [did.stream,'Con el plugin MQTT, cerraste y reabriste el panel y comparaste con la base de datos']
+    ];
+    $('#labMission').innerHTML=items.map(function(i){return '<li class="'+(i[0]?'done':'')+'">'+i[1]+'</li>'}).join('');
+    $('#labDb').setAttribute('aria-pressed',S.mode==='db'?'true':'false');
+    $('#labMq').setAttribute('aria-pressed',S.mode==='mqtt'?'true':'false');
+    $('#labPanel').textContent=S.open?'Cerrar panel':'Abrir panel';
+    draw();
+  }
+  $('#labTemp').addEventListener('input',function(){$('#labTempV').textContent=parseFloat(this.value).toFixed(1)});
+  $('#labPub').addEventListener('click',publish);
+  $('#labAuto').addEventListener('change',function(){
+    if(this.checked){S.timer=setInterval(function(){
+      var base=parseFloat($('#labTemp').value);var v=Math.max(15,Math.min(40,base+(Math.random()-0.5)*0.6));
+      B.publish(T_TEMP,v.toFixed(1));
+    },2000)}else{clearInterval(S.timer);S.timer=null}
+  });
+  $('#labToggle').addEventListener('click',function(){
+    var cmd=S.itemFan?'OFF':'ON';line('openHAB · sendCommand('+cmd+') desde la página','hint');B.publish(T_SET,cmd);
+  });
+  $('#labDb').addEventListener('click',function(){S.mode='db';render()});
+  $('#labMq').addEventListener('click',function(){S.mode='mqtt';render()});
+  $('#labPanel').addEventListener('click',function(){
+    if(S.open){S.open=false;B.unsubscribe(S.gsub);S.gsub=null;line('# Grafana: panel cerrado (se cancela la suscripción del plugin MQTT).','cm')}
+    else{S.open=true;openStream();line('# Grafana: panel abierto (el plugin MQTT se suscribe de nuevo).','cm');if(S.mode==='mqtt')did.stream=true}
+    render();
+  });
+  line('# Laboratorio listo. Ventilador apagado. Publica una lectura.','cm');
+  render();
+})();
+
+/* ---------- cuestionario ---------- */
+(function(){
+  var Q=[
+    {q:'Un sensor publica en casa/cocina/humo. ¿Quién puede recibir ese mensaje?',s:'publicadores',
+      o:['Todos los suscriptores cuyo filtro coincida, sin que el sensor los conozca.','Solo el primer suscriptor que se conectó.','Solo los clientes que el sensor haya elegido al publicar.','Ninguno, hasta que el sensor reciba una confirmación de cada uno.'],
+      w:'El publicador solo escribe en un topic. El broker entrega el mensaje a todos los suscriptores con un filtro que coincida.'},
+    {q:'Quieres recibir la humedad de cualquier zona (granja/zona1/humedad, granja/zona2/humedad), pero no la temperatura. ¿Qué filtro usas?',s:'topics',
+      o:['granja/+/humedad','granja/#','granja/+/+','granja/zona1/humedad'],
+      w:'El comodín + reemplaza exactamente un nivel. # traería también la temperatura y el último filtro solo cubre la zona 1.'},
+    {q:'Un tablero se abre a las 3 pm y quieres que muestre de inmediato el último valor, sin esperar la siguiente publicación. ¿Qué debe haber hecho el sensor?',s:'calidad',
+      o:['Publicar con la bandera retain.','Publicar con QoS 2.','Reiniciar el broker.','Esperar a que el tablero pregunte por HTTP.'],
+      w:'El broker guarda el último mensaje retenido de cada topic y lo entrega al suscriptor nuevo al instante.'},
+    {q:'Un ESP32 pierde la energía sin avisar. ¿Cómo se entera el sistema de que ya no está?',s:'calidad',
+      o:['El broker publica el mensaje de última voluntad (LWT) que el dispositivo registró al conectarse.','El dispositivo publica «offline» justo antes de apagarse.','openHAB se lo pregunta cada segundo.','No hay forma de saberlo.'],
+      w:'Sin energía el dispositivo no puede avisar, por eso deja el LWT al conectarse: si desaparece, el broker lo publica.'},
+    {q:'Con QoS 1, ¿qué garantiza MQTT sobre la entrega del mensaje?',s:'calidad',
+      o:['Que llega al menos una vez, aunque puede duplicarse.','Que llega como máximo una vez.','Que llega exactamente una vez.','Que llega cifrado.'],
+      w:'QoS 1 exige confirmación (PUBACK) y reenvía si no llega: asegura la entrega, pero admite duplicados.'},
+    {q:'En openHAB, ¿qué elemento representa la conexión con tu broker Mosquitto?',s:'ohab',
+      o:['El Thing «MQTT Broker» (bridge)','Un Item de tipo Switch','Una regla','Una página de Main UI'],
+      w:'El bridge es el Thing que guarda host, puerto y credenciales. Los demás Things MQTT cuelgan de él.'},
+    {q:'Quieres que un canal MQTT de openHAB solo muestre estado y no pueda enviar comandos al dispositivo. ¿Qué haces?',s:'ohmqtt',
+      o:['Defines stateTopic y dejas vacío el commandTopic.','Defines commandTopic y dejas vacío el stateTopic.','Activas la opción retained.','Subes el QoS a 2.'],
+      w:'Sin commandTopic, el canal es de solo lectura.'},
+    {q:'¿Qué es un Item en openHAB?',s:'ohab',
+      o:['La representación del valor o estado que usan las reglas y las interfaces, vinculada a un canal.','El programa que se conecta al broker.','El archivo que guarda la contraseña del broker.','El dispositivo físico completo.'],
+      w:'El Item es tu «copia» del valor del canal. Sin vínculo a un canal, nunca cambia.'},
+    {q:'Necesitas ver en Grafana la temperatura de la última semana usando MQTT. ¿Qué debes hacer?',s:'grafmqtt',
+      o:['Guardar los mensajes en una base de series de tiempo y usarla como fuente.','Usar el plugin MQTT, que conserva toda la historia.','Subir el QoS a 2.','Abrir el panel antes de que lleguen los datos.'],
+      w:'El plugin MQTT solo transmite en vivo mientras el panel está abierto. El historial exige una base de datos.'},
+    {q:'Quieres mostrar el nivel de un depósito, de 0 a 100 %, con zonas verde, amarilla y roja. ¿Qué visualización eliges?',s:'graf',
+      o:['Gauge','Table','Logs','Texto'],
+      w:'El medidor (gauge) muestra un valor dentro de un rango, con zonas de color por umbrales.'}
+  ];
+  var box=$('#quizBox'),L='ABCD',cur,score,list,ans;
+  var titles={publicadores:'Publicadores',topics:'Topics y comodines',calidad:'QoS, retain y LWT',ohab:'Qué es openHAB',ohmqtt:'openHAB con MQTT',graf:'Qué es Grafana',grafmqtt:'Fuentes de datos'};
+  function start(){list=Q.map(function(q){return {q:q,opts:shuffle(q.o.map(function(t,i){return {t:t,c:i===0}}))}});cur=0;score=0;ans=[];ask()}
+  function ask(){
+    var it=list[cur];
+    box.innerHTML='<div class="qtop"><span>Pregunta '+(cur+1)+' de '+list.length+'</span><span>Aciertos: '+score+'</span></div><div class="qbar"><i style="width:'+(cur/list.length*100)+'%"></i></div><p class="qq">'+esc(it.q.q)+'</p><div class="opts" id="qo"></div><div id="qf" aria-live="polite"></div>';
+    var qo=$('#qo');
+    it.opts.forEach(function(o,i){
+      var b=el('button','opt','<span class="letter">'+L[i]+'</span>'+esc(o.t));b.type='button';
+      b.addEventListener('click',function(){
+        var ok=o.c;if(ok)score++;
+        ans.push({ok:ok,pick:o.t,right:it.opts.filter(function(x){return x.c})[0].t,q:it.q});
+        $$('.opt',qo).forEach(function(x,j){x.disabled=true;if(it.opts[j].c)x.classList.add('ok');else if(x===b)x.classList.add('bad')});
+        var last=cur===list.length-1;
+        $('#qf').innerHTML='<div class="fb '+(ok?'ok':'bad')+'"><b>'+(ok?'Correcto.':'No es esa.')+'</b> '+esc(it.q.w)+'</div><p style="margin-top:12px"><button class="btn primary" id="qn" type="button">'+(last?'Ver resultado':'Siguiente')+'</button></p>';
+        $('#qn').addEventListener('click',function(){cur++;if(cur<list.length)ask();else done()});
+        $('#qn').focus();
+      });
+      qo.appendChild(b);
+    });
+  }
+  function done(){
+    var n=list.length,msg=score>=9?'Dominas la cadena. Ya puedes armar tu proyecto.':score>=7?'Vas bien. Repasa las secciones de las preguntas que fallaste.':'Conviene repasar la clase con los simuladores antes de la tarea.';
+    var h='<div class="qbar"><i style="width:100%"></i></div><p class="score">'+score+' / '+n+'</p><p style="margin:8px 0 4px"><b>'+msg+'</b></p><ul class="review">';
+    ans.forEach(function(a,i){
+      h+='<li class="'+(a.ok?'ok':'bad')+'"><b>'+(i+1)+'. '+esc(a.q.q)+'</b><small>'+(a.ok?'Tu respuesta fue correcta: ':'Tu respuesta: '+esc(a.pick)+'. Correcta: ')+esc(a.right)+'</small>'+(a.ok?'':'<small>Repasa: <a href="#'+a.q.s+'">'+esc(titles[a.q.s])+'</a></small>')+'</li>';
+    });
+    h+='</ul><button class="btn primary" id="qr" type="button">Intentar de nuevo</button>';
+    box.innerHTML=h;$('#qr').addEventListener('click',start);
+  }
+  start();
+})();
+
+/* ---------- índice, progreso y scroll-spy ---------- */
+(function(){
+  var secs=$$('.sec'),list=$('#tocList'),links={},seen={};
+  var prev=lsGet('c32-seen');try{seen=prev?JSON.parse(prev):{}}catch(e){seen={}}
+  var lastGrp=null;
+  secs.forEach(function(s){
+    var g=s.getAttribute('data-group');
+    if(g&&g!==lastGrp){list.appendChild(el('li','grp',esc(g)));lastGrp=g}
+    var li=el('li',s.getAttribute('data-merge')?'merge':'');var a=el('a','',esc(s.getAttribute('data-title')));a.href='#'+s.id;
+    if(seen[s.id])a.classList.add('seen');li.appendChild(a);list.appendChild(li);links[s.id]=a;
+  });
+  function bar(){var n=Object.keys(seen).length;$('#progress i').style.width=(n/secs.length*100)+'%'}
+  bar();
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(e.isIntersecting){
+          var id=e.target.id;
+          $$('.toc a').forEach(function(a){a.classList.remove('now')});
+          links[id].classList.add('now');
+          if(!seen[id]){seen[id]=1;links[id].classList.add('seen');lsSet('c32-seen',JSON.stringify(seen));bar()}
+          if(window.innerWidth<1000){list.scrollLeft=links[id].parentNode.offsetLeft-16}
+        }
+      });
+    },{rootMargin:'-30% 0px -60% 0px'});
+    secs.forEach(function(s){io.observe(s)});
+  }
+})();
+})();
+</script>
+
+</body></html>
